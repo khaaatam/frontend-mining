@@ -7,7 +7,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 
 const auth = useAuthStore()
 const users = ref([])
@@ -174,7 +174,7 @@ onMounted(() => {
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="role" class="text-sm font-semibold text-left">Role Pengguna</label>
-                    <Dropdown v-model="userForm.role" :options="roles" optionLabel="label" optionValue="value"
+                    <Select v-model="userForm.role" :options="roles" optionLabel="label" optionValue="value"
                         placeholder="Pilih Role" />
                 </div>
             </div>

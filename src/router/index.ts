@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,31 +24,30 @@ const router = createRouter({
       name: 'user-management',
       component: () => import('../views/UserManagementView.vue'),
       meta: { authRequired: true, role: 'Admin' } // CUMA Admin
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      meta: { authRequired: true }
     }
   ]
 })
 
 // Logika Satpam (Navigation Guard)
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const auth = useAuthStore()
 
   // 1. Kalau halaman butuh login tapi user belum login
   if (to.meta.authRequired && !auth.isAuthenticated) {
-    return next('/login')
+    return '/login' // Langsung return path-nya
   }
 
   // 2. Kalau user sudah login tapi maksa buka halaman login
-  if (to.meta.guestOnly && auth.isAuthenticated) {
-    return next('/')
-  }
-
-  // 3. Cek batasan Role (Misal: Operator mau akses halaman Admin)
   if (to.meta.role && to.meta.role !== auth.role) {
-    alert('Lu bukan Admin, jangan macem-macem!')
-    return next('/')
+    alert('Maaf, Anda tidak memiliki hak akses untuk membuka halaman ini.')
+    return '/'
   }
-
-  next()
 })
 
 export default router
