@@ -14,7 +14,12 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(credentials: { email: string; password: string }) {
       try {
-        const response = await axios.post('http://127.0.0.1:8000/api/login', credentials)
+        const response = await axios.post('http://127.0.0.1:8000/api/login', credentials, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          }
+        });
 
         // Ambil data dari response format standard lu
         const { user, token, role } = response.data.data
