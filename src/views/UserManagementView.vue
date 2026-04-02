@@ -25,17 +25,17 @@ const fetchUsers = async () => {
 }
 
 const deleteUser = async (id: number) => {
-    if (confirm('Yakin mau hapus user ini, blay?')) {
+    if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
         try {
             await axios.delete(`http://127.0.0.1:8000/api/users/${id}`, {
                 headers: { Authorization: `Bearer ${auth.token}` }
             })
-            // Refresh data setelah hapus
+
             fetchUsers()
-            alert('User berhasil dihapus!')
+            alert('Data pengguna berhasil dihapus.')
         } catch (error) {
-            console.error('Gagal hapus user:', error)
-            alert('Gagal hapus user, cek koneksi atau role lu.')
+            console.error('Error deleting user:', error)
+            alert('Gagal menghapus pengguna. Silakan periksa kembali hak akses Anda.')
         }
     }
 }
