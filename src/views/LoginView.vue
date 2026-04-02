@@ -40,7 +40,7 @@ const handleLogin = async () => {
             <CardHeader class="space-y-1">
                 <CardTitle class="text-2xl font-bold text-center text-zinc-900">Mining App</CardTitle>
                 <CardDescription class="text-center text-zinc-500">
-                    Masukin kredensial lu buat masuk ke sistem
+                    Masuk untuk melanjutkan ke dashboard.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -59,7 +59,7 @@ const handleLogin = async () => {
                     </div>
 
                     <Button type="submit" class="w-full" :disabled="loading">
-                        {{ loading ? 'Ngegas dulu...' : 'Login' }}
+                        {{ loading ? 'Logging in...' : 'Login' }}
                     </Button>
                 </form>
             </CardContent>

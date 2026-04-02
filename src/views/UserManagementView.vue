@@ -5,10 +5,28 @@ import axios from 'axios'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
 
 const auth = useAuthStore()
 const users = ref([])
 const loading = ref(false)
+const displayModal = ref(false)
+const submitted = ref(false)
+
+const userForm = ref({
+    name: '',
+    email: '',
+    password: '',
+    role: 'Operator'
+})
+
+const roles = ref([
+    { label: 'Admin', value: 'Admin' },
+    { label: 'Operator', value: 'Operator' },
+    { label: 'Viewer', value: 'Viewer' }
+])
 
 const fetchUsers = async () => {
     loading.value = true
@@ -18,9 +36,30 @@ const fetchUsers = async () => {
         })
         users.value = response.data.data
     } catch (error) {
-        console.error('Gagal ambil data user:', error)
+        console.error('Fetch error:', error)
     } finally {
         loading.value = false
+    }
+}
+
+const openNew = () => {
+    userForm.value = { name: '', email: '', password: '', role: 'Operator' }
+    submitted.value = false
+    displayModal.value = true
+}
+
+const saveUser = async () => {
+    submitted.value = true
+    if (userForm.value.name && userForm.value.email && userForm.value.password) {
+        try {
+            await axios.post('http://127.0.0.1:8000/api/users', userForm.value, {
+                headers: { Authorization: `Bearer ${auth.token}` }
+            })
+            displayModal.value = false
+            fetchUsers()
+        } catch (error) {
+            console.error('Submit error:', error)
+        }
     }
 }
 
@@ -30,12 +69,9 @@ const deleteUser = async (id: number) => {
             await axios.delete(`http://127.0.0.1:8000/api/users/${id}`, {
                 headers: { Authorization: `Bearer ${auth.token}` }
             })
-
             fetchUsers()
-            alert('Data pengguna berhasil dihapus.')
         } catch (error) {
-            console.error('Error deleting user:', error)
-            alert('Gagal menghapus pengguna. Silakan periksa kembali hak akses Anda.')
+            console.error('Delete error:', error)
         }
     }
 }
@@ -46,53 +82,70 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-zinc-50 p-8">
+    <div class="min-h-screen bg-zinc-50 p-4 sm:p-8">
         <div class="max-w-6xl mx-auto space-y-6">
-            <div class="flex justify-between items-center bg-white p-6 rounded-lg border border-zinc-200 shadow-sm">
+            <div
+                class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-lg shadow-sm border border-zinc-200 gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-zinc-900">Manajemen User</h1>
-                    <p class="text-sm text-zinc-500">Kelola akun admin, operator, dan viewer di sini.</p>
+                    <p class="text-sm text-zinc-500">Daftar pengguna dan pengaturan hak akses sistem.</p>
                 </div>
-                <router-link to="/">
-                    <Button label="Kembali ke Dashboard" icon="pi pi-arrow-left"
-                        class="p-button-outlined p-button-secondary" />
-                </router-link>
+                <div class="flex gap-2">
+                    <Button label="Tambah User" icon="pi pi-plus" severity="success" size="small" @click="openNew" />
+                    <router-link to="/">
+                        <Button label="Kembali" icon="pi pi-arrow-left" severity="secondary" size="small" outlined />
+                    </router-link>
+                </div>
             </div>
 
-            <div class="bg-white shadow-sm rounded-lg border border-zinc-200 overflow-hidden p-4">
-                <DataTable :value="users" :loading="loading" stripedRows responsiveLayout="scroll"
-                    class="p-datatable-sm custom-table">
-                    <Column field="name" header="Nama" sortable class="py-4"></Column>
-                    <Column field="email" header="Email" sortable></Column>
-                    <Column header="Role">
+            <div class="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+                <DataTable :value="users" :loading="loading" stripedRows size="small" responsiveLayout="scroll">
+                    <Column field="name" header="Nama Lengkap" sortable style="min-width: 12rem"></Column>
+                    <Column field="email" header="Email" sortable style="min-width: 12rem"></Column>
+                    <Column header="Peran" style="min-width: 8rem">
                         <template #body="slotProps">
-                            <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider"
-                                :class="slotProps.data.roles?.[0]?.name === 'Admin' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'">
-                                {{ slotProps.data.roles?.[0]?.name || 'no role' }}
+                            <span
+                                class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-700">
+                                {{ slotProps.data.roles?.[0]?.name || 'N/A' }}
                             </span>
                         </template>
                     </Column>
-                    <Column header="Aksi">
+                    <Column header="Aksi" style="min-width: 6rem" bodyStyle="text-align:center">
                         <template #body="slotProps">
-                            <div class="flex gap-2">
-                                <Button icon="pi pi-pencil" severity="warn" text rounded size="small" />
-
-                                <Button icon="pi pi-trash" severity="danger" text rounded size="small"
-                                    @click="deleteUser(slotProps.data.id)" />
-                            </div>
+                            <Button icon="pi pi-trash" severity="danger" text rounded
+                                @click="deleteUser(slotProps.data.id)" />
                         </template>
                     </Column>
                 </DataTable>
             </div>
         </div>
+
+        <Dialog v-model:visible="displayModal" header="Tambah Pengguna" :modal="true" :style="{ width: '450px' }"
+            class="p-fluid">
+            <div class="flex flex-col gap-4 mt-2">
+                <div class="flex flex-col gap-2">
+                    <label for="name" class="text-sm font-semibold">Nama</label>
+                    <InputText id="name" v-model="userForm.name" :class="{ 'p-invalid': submitted && !userForm.name }" />
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="email" class="text-sm font-semibold">Email</label>
+                    <InputText id="email" v-model="userForm.email"
+                        :class="{ 'p-invalid': submitted && !userForm.email }" />
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="password" class="text-sm font-semibold">Password</label>
+                    <InputText id="password" type="password" v-model="userForm.password"
+                        :class="{ 'p-invalid': submitted && !userForm.password }" />
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="role" class="text-sm font-semibold">Role</label>
+                    <Dropdown v-model="userForm.role" :options="roles" optionLabel="label" optionValue="value" />
+                </div>
+            </div>
+            <template #footer>
+                <Button label="Batal" icon="pi pi-times" severity="secondary" text @click="displayModal = false" />
+                <Button label="Simpan" icon="pi pi-check" severity="success" @click="saveUser" />
+            </template>
+        </Dialog>
     </div>
 </template>
-
-<style scoped>
-/* Biar header tabel gak item banget kalau bentrok sama theme */
-:deep(.p-datatable-thead > tr > th) {
-    background-color: #f9fafb !important;
-    color: #374151 !important;
-    border-bottom: 1px solid #e5e7eb !important;
-}
-</style>
