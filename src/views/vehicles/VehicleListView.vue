@@ -2,22 +2,21 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth' // sesuaikan path store lu
+import { useAuthStore } from '@/stores/auth'
 import Select from 'primevue/select'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import VehicleStatusBadge from '@/components/VehicleStatusBadge.vue' // sesuaikan path komponen lu
+import VehicleStatusBadge from '@/components/VehicleStatusBadge.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
 
 const vehicles = ref([])
-const vehicleTypes = ref([])
+const vehicleTypes = ref<any[]>([])
 const loading = ref(true)
 
-// State untuk filter spatie query builder
 const filters = ref({
     status: null,
     vehicle_type_id: null,
@@ -42,18 +41,17 @@ const fetchVehicleTypes = async () => {
             value: type.id
         }))
     } catch (error) {
-        console.error('Gagal mengambil tipe kendaraan', error)
+        console.error('Failed to fetch vehicle types', error)
     }
 }
 
 const fetchVehicles = async () => {
     loading.value = true
     try {
-        // Build query params untuk spatie
         const params: any = {
             include: 'vehicleType,currentOperator',
             sort: '-created_at',
-            per_page: 100 // Ambil banyak sekalian buat demo virtual scroll
+            per_page: 100
         }
 
         if (filters.value.status) params['filter[status]'] = filters.value.status
@@ -66,7 +64,7 @@ const fetchVehicles = async () => {
         })
         vehicles.value = response.data.data
     } catch (error) {
-        console.error('Gagal mengambil data kendaraan', error)
+        console.error('Failed to fetch vehicles', error)
     } finally {
         loading.value = false
     }
@@ -78,11 +76,10 @@ const updateStatus = async (vehicleId: number, newStatus: string) => {
             { status: newStatus },
             { headers: { Authorization: `Bearer ${auth.token}` } }
         )
-        // Refresh data setelah update status
         fetchVehicles()
     } catch (error) {
-        console.error('Gagal mengupdate status', error)
-        alert('Gagal mengubah status kendaraan')
+        console.error('Failed to update status', error)
+        alert('Failed to update vehicle status')
     }
 }
 
@@ -94,7 +91,6 @@ const goToAdd = () => {
     router.push('/vehicles/create')
 }
 
-// Watch perubahan filter buat auto-fetch
 watch(filters, () => {
     fetchVehicles()
 }, { deep: true })
@@ -155,13 +151,23 @@ onMounted(() => {
                 </template>
             </Column>
 
-            <Column header="Status" style="min-width: 250px">
+            <Column header="Status" style="min-width: 150px">
                 <template #body="{ data }">
-                    <div class="flex items-center gap-2" @click.stop>
-                        <VehicleStatusBadge :status="data.status" />
+                    <div @click.stop>
                         <Select :modelValue="data.status" @update:modelValue="updateStatus(data.id, $event)"
-                            :options="statusOptions" optionLabel="label" optionValue="value" class="w-32 text-sm"
-                            size="small" />
+                            :options="statusOptions" optionLabel="label" optionValue="value" class="ghost-select">
+                            <template #value="slotProps">
+                                <VehicleStatusBadge v-if="slotProps.value" :status="slotProps.value" is-dropdown />
+                            </template>
+
+                            <template #option="slotProps">
+                                <VehicleStatusBadge :status="slotProps.option.value" />
+                            </template>
+
+                            <template #dropdownicon>
+                                <span></span>
+                            </template>
+                        </Select>
                     </div>
                 </template>
             </Column>
@@ -176,8 +182,29 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Agar row datatable bisa diklik dan ada efek hover */
 :deep(.p-datatable-tbody > tr) {
     cursor: pointer;
+}
+
+:deep(.p-select-label) {
+    padding: 0.25rem 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Menghilangkan border, shadow, dan background default PrimeVue Select */
+:deep(.ghost-select) {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    height: auto !important;
+}
+
+/* Memastikan label di dalemnya nggak ada padding tambahan */
+:deep(.ghost-select .p-select-label) {
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
 }
 </style>
