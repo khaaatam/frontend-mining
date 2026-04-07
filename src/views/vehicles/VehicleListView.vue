@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/components/ui/toast/use-toast'
 import Select from 'primevue/select'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -12,8 +13,9 @@ import VehicleStatusBadge from '@/components/VehicleStatusBadge.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { toast } = useToast()
 
-const vehicles = ref([])
+const vehicles = ref<any[]>([])
 const vehicleTypes = ref<any[]>([])
 const loading = ref(true)
 
@@ -76,10 +78,25 @@ const updateStatus = async (vehicleId: number, newStatus: string) => {
             { status: newStatus },
             { headers: { Authorization: `Bearer ${auth.token}` } }
         )
-        fetchVehicles()
+
+        // Update Lokal: Ini yang bikin smooth dan gak loncat (jumping)
+        const index = vehicles.value.findIndex(v => v.id === vehicleId)
+        if (index !== -1) {
+            vehicles.value[index].status = newStatus
+        }
+
+        toast({
+            title: 'Berhasil',
+            description: 'Status kendaraan berhasil diperbarui',
+        })
     } catch (error) {
-        console.error('Failed to update status', error)
-        alert('Failed to update vehicle status')
+        console.error('Gagal mengupdate status', error)
+        // Pake toast biar seragam sama form
+        toast({
+            title: 'Error',
+            description: 'Gagal mengubah status kendaraan',
+            variant: 'destructive'
+        })
     }
 }
 
