@@ -5,6 +5,7 @@ import LoginView from '../views/LoginView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import VehicleListView from '@/views/vehicles/VehicleListView.vue'
 
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -39,6 +40,24 @@ const router = createRouter({
       meta: {
         authRequired: true
       }
+    },
+    {
+      path: '/vehicles/create',
+      name: 'vehicle-create',
+      component: () => import('@/views/vehicles/VehicleFormView.vue'),
+      meta: { authRequired: true }
+    },
+    {
+      path: '/vehicles/:id/edit',
+      name: 'vehicle-edit',
+      component: () => import('@/views/vehicles/VehicleFormView.vue'),
+      meta: { authRequired: true }
+    },
+    {
+      path: '/vehicles/:id',
+      name: 'vehicle-detail',
+      component: () => import('@/views/vehicles/VehicleDetailView.vue'),
+      meta: { authRequired: true }
     },
   ]
 })
