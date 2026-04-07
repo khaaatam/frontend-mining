@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import VehicleListView from '@/views/vehicles/VehicleListView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,7 +31,15 @@ const router = createRouter({
       name: 'profile',
       component: ProfileView,
       meta: { authRequired: true }
-    }
+    },
+    {
+      path: '/vehicles',
+      name: 'vehicles',
+      component: VehicleListView,
+      meta: {
+        authRequired: true
+      }
+    },
   ]
 })
 
