@@ -32,6 +32,10 @@ const handleLogout = () => {
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
+          <router-link to="/vehicles">
+            <Button label="Kelola Kendaraan" icon="pi pi-car" size="small" />
+          </router-link>
+
           <router-link v-if="auth.isAdmin" to="/users">
             <Button label="Kelola User" icon="pi pi-users" severity="secondary" size="small" outlined />
           </router-link>

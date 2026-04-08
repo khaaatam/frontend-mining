@@ -8,8 +8,8 @@ export const useAuthStore = defineStore('auth', {
     role: localStorage.getItem('role') || null,
   }),
   getters: {
-    isAuthenticated: (state) => !!state.token,
-    isAdmin: (state) => state.role === 'Admin',
+    isAuthenticated: (state) => !!state.token && state.token !== 'undefined',
+    isAdmin: (state) => state.role === 'admin' || state.role === 'Admin',
   },
   actions: {
     async login(credentials: { email: string; password: string }) {
@@ -21,19 +21,24 @@ export const useAuthStore = defineStore('auth', {
           }
         });
 
-        // Ambil data dari response format standard lu
-        const { user, token, role } = response.data.data
+        // ambil dari response.data langsung
+        const token = response.data.access_token
+        const user = response.data.user
+
+        // ekstrak role pertama dari array roles bawaan spatie
+        const role = user.roles && user.roles.length > 0 ? user.roles[0].name : null
 
         this.token = token
         this.role = role
         this.user = user
 
         localStorage.setItem('token', token)
-        localStorage.setItem('role', role)
+        localStorage.setItem('role', role || '')
         localStorage.setItem('user', JSON.stringify(user))
 
         return response.data
       } catch (error: any) {
+        console.error('error login frontend:', error) // gw tambahin log ini biar gampang nyari tau kalo ada yg crash lagi
         throw error.response?.data || { message: 'Terjadi kesalahan sistem' }
       }
     },

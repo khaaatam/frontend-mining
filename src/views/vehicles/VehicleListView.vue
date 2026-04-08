@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
@@ -32,6 +32,34 @@ const statusOptions = [
     { label: 'Breakdown', value: 'breakdown' },
     { label: 'Decommissioned', value: 'decommissioned' }
 ]
+
+// Memeriksa apakah pengguna memiliki hak akses manajemen kendaraan (Admin atau Operator)
+const canManage = computed(() => {
+    const userRole = (auth.role || '').toLowerCase()
+    return userRole === 'admin' || userRole === 'operator'
+})
+
+const isAdmin = computed(() => {
+    const userRole = (auth.role || '').toLowerCase()
+    return userRole === 'admin'
+})
+
+const deleteVehicle = async (id: number) => {
+    if (!window.confirm('Yakin hapus aset ini?')) return
+
+    try {
+        await axios.delete(`http://127.0.0.1:8000/api/vehicles/${id}`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+        })
+
+        // Hapus data secara lokal biar gak perlu fetch/refresh ulang (smooth UX)
+        vehicles.value = vehicles.value.filter(v => v.id !== id)
+
+        toast({ title: 'Berhasil', description: 'Aset kendaraan dihapus' })
+    } catch (error) {
+        toast({ title: 'Error', description: 'Gagal menghapus kendaraan', variant: 'destructive' })
+    }
+}
 
 const fetchVehicleTypes = async () => {
     try {
@@ -79,7 +107,6 @@ const updateStatus = async (vehicleId: number, newStatus: string) => {
             { headers: { Authorization: `Bearer ${auth.token}` } }
         )
 
-        // Update Lokal: Ini yang bikin smooth dan gak loncat (jumping)
         const index = vehicles.value.findIndex(v => v.id === vehicleId)
         if (index !== -1) {
             vehicles.value[index].status = newStatus
@@ -91,7 +118,6 @@ const updateStatus = async (vehicleId: number, newStatus: string) => {
         })
     } catch (error) {
         console.error('Gagal mengupdate status', error)
-        // Pake toast biar seragam sama form
         toast({
             title: 'Error',
             description: 'Gagal mengubah status kendaraan',
@@ -122,7 +148,8 @@ onMounted(() => {
     <div class="p-6 bg-white rounded-lg shadow-md">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Vehicle Management</h1>
-            <Button label="Tambah Kendaraan" icon="pi pi-plus" @click="goToAdd" class="p-button-success" />
+            <Button v-if="canManage" label="Tambah Kendaraan" icon="pi pi-plus" @click="goToAdd"
+                class="p-button-success" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-md border border-gray-200">
@@ -170,21 +197,23 @@ onMounted(() => {
 
             <Column header="Status" style="min-width: 150px">
                 <template #body="{ data }">
-                    <div @click.stop>
+                    <div v-if="canManage" @click.stop>
                         <Select :modelValue="data.status" @update:modelValue="updateStatus(data.id, $event)"
                             :options="statusOptions" optionLabel="label" optionValue="value" class="ghost-select">
                             <template #value="slotProps">
                                 <VehicleStatusBadge v-if="slotProps.value" :status="slotProps.value" is-dropdown />
+                                <span v-else>Pilih Status</span>
                             </template>
-
                             <template #option="slotProps">
                                 <VehicleStatusBadge :status="slotProps.option.value" />
                             </template>
-
                             <template #dropdownicon>
                                 <span></span>
                             </template>
                         </Select>
+                    </div>
+                    <div v-else>
+                        <VehicleStatusBadge :status="data.status" />
                     </div>
                 </template>
             </Column>
@@ -192,6 +221,21 @@ onMounted(() => {
             <Column header="Last Seen" style="min-width: 150px">
                 <template #body="{ data }">
                     {{ data.last_seen_at ? new Date(data.last_seen_at).toLocaleString('id-ID') : '-' }}
+                </template>
+            </Column>
+
+            <Column v-if="isAdmin" style="min-width: 100px">
+                <template #header>
+                    <div class="flex justify-center w-full font-semibold">
+                        Aksi
+                    </div>
+                </template>
+
+                <template #body="{ data }">
+                    <div class="flex justify-center w-full">
+                        <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm"
+                            @click.stop="deleteVehicle(data.id)" title="Hapus Kendaraan" />
+                    </div>
                 </template>
             </Column>
         </DataTable>
@@ -203,13 +247,6 @@ onMounted(() => {
     cursor: pointer;
 }
 
-:deep(.p-select-label) {
-    padding: 0.25rem 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-/* Menghilangkan border, shadow, dan background default PrimeVue Select */
 :deep(.ghost-select) {
     border: none !important;
     background: transparent !important;
@@ -218,10 +255,13 @@ onMounted(() => {
     height: auto !important;
 }
 
-/* Memastikan label di dalemnya nggak ada padding tambahan */
 :deep(.ghost-select .p-select-label) {
     padding: 0 !important;
     display: flex;
     align-items: center;
+}
+
+:deep(.ghost-select:not(.p-disabled):hover) {
+    background: transparent !important;
 }
 </style>

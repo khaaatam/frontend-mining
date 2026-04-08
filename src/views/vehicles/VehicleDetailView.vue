@@ -1,19 +1,57 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/components/ui/toast/use-toast'
 import VehicleStatusBadge from '@/components/VehicleStatusBadge.vue'
 import { Button } from '@/components/ui/button'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const { toast } = useToast()
 
-// pakai record<string, any> biar typescript gak ngomel
 const vehicle = ref<Record<string, any>>({})
 const activities = ref<any[]>([])
 const loading = ref(true)
+
+// Memeriksa hak akses pengguna untuk fitur pembaruan data
+const canManage = computed(() => {
+    const userRole = (auth.role || '').toLowerCase()
+    return userRole === 'admin' || userRole === 'operator'
+})
+
+// Memeriksa hak akses eksklusif administrator
+const isAdmin = computed(() => {
+    const userRole = (auth.role || '').toLowerCase()
+    return userRole === 'admin'
+})
+
+// Menjalankan proses penghapusan data kendaraan
+const deleteVehicle = async () => {
+    if (!window.confirm('Yakin mau hapus kendaraan ini? Data yang sudah dihapus tidak dapat dikembalikan.')) return
+
+    try {
+        await axios.delete(`http://127.0.0.1:8000/api/vehicles/${route.params.id}`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+        })
+
+        toast({
+            title: 'Berhasil',
+            description: 'Kendaraan berhasil dihapus',
+        })
+
+        router.push('/vehicles')
+    } catch (error) {
+        console.error('Gagal menghapus kendaraan', error)
+        toast({
+            title: 'Error',
+            description: 'Gagal menghapus kendaraan',
+            variant: 'destructive'
+        })
+    }
+}
 
 const fetchVehicleDetail = async () => {
     try {
@@ -22,7 +60,7 @@ const fetchVehicleDetail = async () => {
         })
         vehicle.value = response.data.data
     } catch (error) {
-        console.error('gagal mengambil detail kendaraan', error)
+        console.error('Gagal mengambil detail kendaraan', error)
     }
 }
 
@@ -33,8 +71,7 @@ const fetchActivities = async () => {
         })
         activities.value = response.data.data
     } catch (error) {
-        // abaikan error 404 sementara karena backend belum ada endpoint ini
-        console.warn('endpoint log aktivitas belum tersedia di backend')
+        console.warn('Endpoint log aktivitas belum tersedia')
     }
 }
 
@@ -68,7 +105,8 @@ const formatDate = (dateString: string) => {
             </div>
             <div class="flex items-center gap-3">
                 <Button variant="outline" @click="router.push('/vehicles')">Kembali</Button>
-                <Button @click="router.push(`/vehicles/${vehicle.id}/edit`)">Edit Data</Button>
+                <Button v-if="canManage" @click="router.push(`/vehicles/${vehicle.id}/edit`)">Edit Data</Button>
+                <Button v-if="isAdmin" variant="destructive" @click="deleteVehicle">Hapus</Button>
             </div>
         </div>
 
@@ -113,7 +151,8 @@ const formatDate = (dateString: string) => {
                     <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
                         <div>
                             <p class="text-gray-500 mb-1">Operator Saat Ini</p>
-                            <p class="font-medium text-gray-900">{{ vehicle.current_operator?.name || 'Belum di-assign' }}</p>
+                            <p class="font-medium text-gray-900">{{ vehicle.current_operator?.name || 'Belum di-assign'
+                            }}</p>
                         </div>
                         <div>
                             <p class="text-gray-500 mb-1">Jam Operasional (Hours)</p>
@@ -156,11 +195,13 @@ const formatDate = (dateString: string) => {
                     <div class="space-y-4 text-sm">
                         <div>
                             <p class="text-gray-500 mb-1">Device ID</p>
-                            <p class="font-medium text-gray-900 font-mono">{{ vehicle.gps_device_id || 'Tidak ada perangkat' }}</p>
+                            <p class="font-medium text-gray-900 font-mono">{{ vehicle.gps_device_id ||
+                                'Tidak ada perangkat' }}</p>
                         </div>
                         <div>
                             <p class="text-gray-500 mb-1">Terakhir Terlihat (Last Seen)</p>
-                            <p class="font-medium text-gray-900">{{ vehicle.last_seen_at ? new Date(vehicle.last_seen_at).toLocaleString('id-ID') : 'Belum pernah online' }}</p>
+                            <p class="font-medium text-gray-900">{{ vehicle.last_seen_at ? new
+                                Date(vehicle.last_seen_at).toLocaleString('id-ID') : 'Belum pernah online' }}</p>
                         </div>
                     </div>
                 </div>
@@ -173,9 +214,11 @@ const formatDate = (dateString: string) => {
                     <div v-else class="space-y-6">
                         <div v-for="log in activities" :key="log.id" class="border-l-2 border-indigo-200 pl-4 relative">
                             <div class="absolute w-2.5 h-2.5 bg-indigo-500 rounded-full -left-[6px] top-1"></div>
-                            <p class="text-xs text-gray-400 mb-1">{{ new Date(log.created_at).toLocaleString('id-ID') }}</p>
+                            <p class="text-xs text-gray-400 mb-1">{{ new Date(log.created_at).toLocaleString('id-ID') }}
+                            </p>
                             <p class="text-sm font-medium text-gray-800">{{ log.description }}</p>
-                            <p class="text-xs text-gray-500 mt-1 capitalize">Oleh: {{ log.causer?.name || 'Sistem' }}</p>
+                            <p class="text-xs text-gray-500 mt-1 capitalize">Oleh: {{ log.causer?.name || 'Sistem' }}
+                            </p>
                         </div>
                     </div>
                 </div>
