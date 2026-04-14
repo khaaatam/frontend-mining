@@ -264,7 +264,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* css ini tetep dipertahanin khusus buat ngereset style dropdown primevue pas lagi ngerubah status */
 :deep(.ghost-select) {
     border: none !important;
     background: transparent !important;

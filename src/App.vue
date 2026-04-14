@@ -15,26 +15,26 @@ const menuItems = [
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-[#f5f4f1] text-[#1a1916] font-sans antialiased">
+  <div class="flex min-h-screen text-[#1a1916] font-sans antialiased">
 
-    <aside class="w-[220px] shrink-0 bg-[#f0efe9] border-r border-black/10 py-5 flex flex-col">
-      <div class="px-5 pb-5 mb-3 text-[13px] font-bold tracking-tight border-b border-black/10">
+    <aside class="w-[240px] shrink-0 bg-[#f5f4f1] border-r border-black/10 py-6 flex flex-col">
+      <div class="px-6 mb-8 text-[15px] font-semibold tracking-tight">
         Mining Tracking
       </div>
 
       <nav class="flex flex-col">
         <RouterLink v-for="item in menuItems" :key="item.path" :to="item.path"
-          class="group flex items-center gap-3 px-5 py-2 text-[13px] text-[#6b6a64] hover:text-[#1a1916] transition-all"
-          active-class="bg-[#e8e7e0] !text-[#1a1916] font-semibold border-r-2 border-[#1a1916]">
+          class="group flex items-center gap-3 px-6 py-2.5 text-[13px] text-[#6b6a64] hover:text-[#1a1916] transition-all border-r-[3px] border-transparent"
+          active-class="bg-[#e8e7e0] !text-[#1a1916] font-medium !border-[#1a1916]">
           <div
-            class="w-1.5 h-1.5 rounded-full bg-black/10 group-hover:bg-[#1a1916]/40 group-[.router-link-active]:bg-[#1a1916]">
+            class="w-1.5 h-1.5 rounded-full bg-black/20 group-hover:bg-[#1a1916]/40 group-[.router-link-active]:bg-[#1a1916]">
           </div>
           {{ item.name }}
         </RouterLink>
       </nav>
     </aside>
 
-    <main class="flex-1 overflow-y-auto">
+    <main class="flex-1 bg-white overflow-y-auto">
       <div class="p-8">
         <RouterView />
       </div>

@@ -19,6 +19,8 @@ const isEdit = computed(() => route.params.id !== undefined)
 const loading = ref(false)
 const vehicleTypes = ref<any[]>([])
 
+const activeTab = ref('identity')
+
 const form = ref<Record<string, any>>({
     asset_number: '',
     make: '',
@@ -123,142 +125,140 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-semibold text-gray-800">
-                {{ isEdit ? 'Edit Kendaraan' : 'Tambah Kendaraan Baru' }}
-            </h1>
-            <Button variant="outline" @click="router.push('/vehicles')">Batal</Button>
-        </div>
-
+    <div class="max-w-[1000px] mx-auto pb-12">
+        
         <form @submit.prevent="submitForm">
-            <Tabs defaultValue="identity" class="w-full">
-                <TabsList class="grid w-full grid-cols-4 mb-6">
-                    <TabsTrigger value="identity">Identity</TabsTrigger>
-                    <TabsTrigger value="operational">Operational</TabsTrigger>
-                    <TabsTrigger value="gps">GPS Tracking</TabsTrigger>
-                    <TabsTrigger value="compliance">Compliance</TabsTrigger>
-                </TabsList>
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h1 class="text-[17px] font-semibold tracking-tight text-[#1a1916]">
+                        {{ isEdit ? 'Edit Kendaraan' : 'Tambah Kendaraan Baru' }}
+                    </h1>
+                    <p class="text-[12px] text-[#9e9d96] mt-[1px]">Lengkapi data informasi dan spesifikasi kendaraan</p>
+                </div>
+                
+                <div class="flex items-center gap-1.5 p-1 bg-[#f0efe9] rounded-lg border border-black/10">
+                    <button type="button" @click="activeTab = 'identity'" :class="activeTab === 'identity' ? 'bg-white shadow-sm border border-black/10 font-semibold text-[#1a1916]' : 'border-transparent text-[#6b6a64] hover:text-[#1a1916]'" class="px-4 py-1.5 text-[12px] rounded-md transition-all">Identity</button>
+                    <button type="button" @click="activeTab = 'operational'" :class="activeTab === 'operational' ? 'bg-white shadow-sm border border-black/10 font-semibold text-[#1a1916]' : 'border-transparent text-[#6b6a64] hover:text-[#1a1916]'" class="px-4 py-1.5 text-[12px] rounded-md transition-all">Operational</button>
+                    <button type="button" @click="activeTab = 'gps'" :class="activeTab === 'gps' ? 'bg-white shadow-sm border border-black/10 font-semibold text-[#1a1916]' : 'border-transparent text-[#6b6a64] hover:text-[#1a1916]'" class="px-4 py-1.5 text-[12px] rounded-md transition-all">GPS Tracking</button>
+                    <button type="button" @click="activeTab = 'compliance'" :class="activeTab === 'compliance' ? 'bg-white shadow-sm border border-black/10 font-semibold text-[#1a1916]' : 'border-transparent text-[#6b6a64] hover:text-[#1a1916]'" class="px-4 py-1.5 text-[12px] rounded-md transition-all">Compliance</button>
+                </div>
+            </div>
 
-                <TabsContent value="identity" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <Label for="asset_number">Asset Number</Label>
-                            <Input id="asset_number" v-model="form.asset_number" required
-                                placeholder="Contoh: TRK-001" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="vin">VIN / Nomor Rangka</Label>
-                            <Input id="vin" v-model="form.vin" placeholder="Nomor identifikasi kendaraan" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="make">Merek (Make)</Label>
-                            <Input id="make" v-model="form.make" required placeholder="Contoh: Komatsu, Volvo" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="model">Model</Label>
-                            <Input id="model" v-model="form.model" required placeholder="Contoh: HD785" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="year">Tahun Pembuatan</Label>
-                            <Input id="year" type="number" v-model="form.year" placeholder="2023" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="plate_number">Plat Nomor</Label>
-                            <Input id="plate_number" v-model="form.plate_number" placeholder="Contoh: B 1234 XYZ" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label>Tipe Kendaraan</Label>
-                            <Select v-model="form.vehicle_type_id" required>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Pilih tipe kendaraan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem v-for="type in vehicleTypes" :key="type.id" :value="String(type.id)">
-                                        {{ type.name }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div class="space-y-2">
-                            <Label>Status Kepemilikan</Label>
-                            <Select v-model="form.ownership_type" required>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Pilih kepemilikan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem v-for="type in ownershipOptions" :key="type" :value="type">
-                                        {{ type.charAt(0).toUpperCase() + type.slice(1) }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+            <div v-show="activeTab === 'identity'" class="bg-white border border-black/10 rounded-[16px] p-6 shadow-sm">
+                <div class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-5 pb-2 border-b border-black/10">
+                    identitas dasar
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Asset Number</label>
+                        <input v-model="form.asset_number" required placeholder="Contoh: TRK-001" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30" />
                     </div>
-                </TabsContent>
-
-                <TabsContent value="operational" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <Label>Status Operasional</Label>
-                            <Select v-model="form.status" required>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Pilih status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem v-for="status in statusOptions" :key="status" :value="status">
-                                        {{ status.charAt(0).toUpperCase() + status.slice(1) }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="operating_hours">Jam Operasional (Hours)</Label>
-                            <Input id="operating_hours" type="number" step="0.1" v-model="form.operating_hours" />
-                        </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">VIN / Nomor Rangka</label>
+                        <input v-model="form.vin" placeholder="Nomor identifikasi kendaraan" class="w-full px-3 py-2 font-mono text-[12px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30 placeholder:font-sans" />
                     </div>
-                </TabsContent>
-
-                <TabsContent value="gps" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <Label for="gps_device_id">ID Perangkat GPS</Label>
-                            <Input id="gps_device_id" v-model="form.gps_device_id"
-                                placeholder="Masukkan IMEI atau ID device" />
-                        </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Merek (Make)</label>
+                        <input v-model="form.make" required placeholder="Contoh: Komatsu, Volvo" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30" />
                     </div>
-                </TabsContent>
-
-                <TabsContent value="compliance" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <Label for="stnk_expiry">Masa Berlaku STNK</Label>
-                            <Input id="stnk_expiry" type="date" v-model="form.stnk_expiry" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="kir_expiry">Masa Berlaku KIR</Label>
-                            <Input id="kir_expiry" type="date" v-model="form.kir_expiry" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="insurance_expiry">Masa Berlaku Asuransi</Label>
-                            <Input id="insurance_expiry" type="date" v-model="form.insurance_expiry" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="last_service_date">Tanggal Servis Terakhir</Label>
-                            <Input id="last_service_date" type="date" v-model="form.last_service_date" />
-                        </div>
-                        <div class="space-y-2">
-                            <Label for="next_service_date">Jadwal Servis Berikutnya</Label>
-                            <Input id="next_service_date" type="date" v-model="form.next_service_date" />
-                        </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Model</label>
+                        <input v-model="form.model" required placeholder="Contoh: HD785" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30" />
                     </div>
-                </TabsContent>
-            </Tabs>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Tahun Pembuatan</label>
+                        <input type="number" v-model="form.year" placeholder="2023" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Plat Nomor</label>
+                        <input v-model="form.plate_number" placeholder="Contoh: B 1234 XYZ" class="w-full px-3 py-2 font-mono text-[12px] uppercase bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30 placeholder:font-sans placeholder:normal-case" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Tipe Kendaraan</label>
+                        <select v-model="form.vehicle_type_id" required class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]">
+                            <option value="" disabled>Pilih tipe kendaraan</option>
+                            <option v-for="type in vehicleTypes" :key="type.id" :value="String(type.id)">{{ type.name }}</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Status Kepemilikan</label>
+                        <select v-model="form.ownership_type" required class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]">
+                            <option value="" disabled>Pilih kepemilikan</option>
+                            <option v-for="type in ownershipOptions" :key="type" :value="type">{{ type.charAt(0).toUpperCase() + type.slice(1) }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-            <div class="mt-8 flex justify-end">
-                <Button type="submit" :disabled="loading">
+            <div v-show="activeTab === 'operational'" class="bg-white border border-black/10 rounded-[16px] p-6 shadow-sm">
+                <div class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-5 pb-2 border-b border-black/10">
+                    status operasional
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Status Operasional</label>
+                        <select v-model="form.status" required class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]">
+                            <option value="" disabled>Pilih status</option>
+                            <option v-for="status in statusOptions" :key="status" :value="status">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Jam Operasional (Hours)</label>
+                        <input type="number" step="0.1" v-model="form.operating_hours" placeholder="0.0" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30" />
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="activeTab === 'gps'" class="bg-white border border-black/10 rounded-[16px] p-6 shadow-sm">
+                <div class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-5 pb-2 border-b border-black/10">
+                    konfigurasi gps
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">ID Perangkat GPS</label>
+                        <input v-model="form.gps_device_id" placeholder="Masukkan IMEI atau ID device" class="w-full px-3 py-2 font-mono text-[12px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30 placeholder:font-sans" />
+                        <span class="text-[11px] text-[#9e9d96] mt-0.5">Sistem akan otomatis me-link data ping berdasarkan ID ini.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="activeTab === 'compliance'" class="bg-white border border-black/10 rounded-[16px] p-6 shadow-sm">
+                <div class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-5 pb-2 border-b border-black/10">
+                    dokumen & legalitas
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Masa Berlaku STNK</label>
+                        <input type="date" v-model="form.stnk_expiry" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Masa Berlaku KIR</label>
+                        <input type="date" v-model="form.kir_expiry" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Masa Berlaku Asuransi</label>
+                        <input type="date" v-model="form.insurance_expiry" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Tanggal Servis Terakhir</label>
+                        <input type="date" v-model="form.last_service_date" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[#6b6a64]">Jadwal Servis Berikutnya</label>
+                        <input type="date" v-model="form.next_service_date" class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-6">
+                <button type="button" @click="router.push('/vehicles')" class="inline-flex items-center justify-center px-4 py-2 text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
+                    Batal
+                </button>
+                <button type="submit" :disabled="loading" class="inline-flex items-center justify-center px-4 py-2 text-[13px] font-medium rounded-md bg-[#1a1916] text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ loading ? 'Menyimpan...' : 'Simpan Data Kendaraan' }}
-                </Button>
+                </button>
             </div>
         </form>
+        
     </div>
 </template>
