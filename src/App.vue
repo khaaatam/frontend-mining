@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, RouterLink, useRoute } from 'vue-router'
+
+const route = useRoute()
+
+const isMenuActive = (path: string) => {
+  if (path === '/dashboard') return route.path === '/dashboard'
+  return route.path.startsWith(path)
+}
 
 // daftar menu buat di sidebar sesuai mockup m04
 const menuItems = [
-  { name: 'Dashboard', path: '/' },
+  { name: 'Dashboard', path: '/dashboard' },
   { name: 'Vehicles', path: '/vehicles' },
   { name: 'GPS Providers', path: '/gps-providers' },
   { name: 'Live Map', path: '/live-map' },
@@ -24,19 +31,23 @@ const menuItems = [
 
       <nav class="flex flex-col">
         <RouterLink v-for="item in menuItems" :key="item.path" :to="item.path"
-          class="group flex items-center gap-3 px-6 py-2.5 text-[13px] text-[#6b6a64] hover:text-[#1a1916] transition-all border-r-[3px] border-transparent"
-          active-class="bg-[#e8e7e0] !text-[#1a1916] font-medium !border-[#1a1916]">
-          <div
-            class="w-1.5 h-1.5 rounded-full bg-black/20 group-hover:bg-[#1a1916]/40 group-[.router-link-active]:bg-[#1a1916]">
+          class="group flex items-center gap-3 px-6 py-2.5 text-[13px] text-[#6b6a64] hover:text-[#1a1916] transition-all border-r-[3px]"
+          :class="isMenuActive(item.path)
+            ? 'bg-[#e8e7e0] !text-[#1a1916] font-medium border-[#1a1916]'
+            : 'border-transparent'">
+          <div class="w-1.5 h-1.5 rounded-full transition-colors"
+            :class="isMenuActive(item.path) ? 'bg-[#1a1916]' : 'bg-black/20 group-hover:bg-[#1a1916]/40'">
           </div>
           {{ item.name }}
         </RouterLink>
       </nav>
     </aside>
 
-    <main class="flex-1 bg-white overflow-y-auto">
-      <div class="p-8">
-        <RouterView />
+    <main class="flex-1 overflow-y-auto bg-white">
+      <div class="flex justify-center w-full min-h-full">
+        <div class="w-full max-w-[1000px] p-8">
+          <RouterView />
+        </div>
       </div>
     </main>
 

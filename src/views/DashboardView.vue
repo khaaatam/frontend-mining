@@ -2,7 +2,6 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MapBase from '@/components/MapBase.vue'
-import Button from 'primevue/button'
 
 const auth = useAuthStore()
 const router = useRouter()

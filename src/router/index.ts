@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import VehicleListView from '@/views/vehicles/VehicleListView.vue'
+import DashboardView from '../views/DashboardView.vue'
 
 
 const router = createRouter({
@@ -13,19 +13,19 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { guestOnly: true } // Cuma buat yang BELUM login
+      meta: { guestOnly: true }
     },
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { authRequired: true } // Harus login
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
+      meta: { authRequired: true }
     },
     {
       path: '/users',
       name: 'user-management',
       component: () => import('../views/UserManagementView.vue'),
-      meta: { authRequired: true, role: 'Admin' } // CUMA Admin
+      meta: { authRequired: true, role: 'Admin' }
     },
     {
       path: '/profile',
