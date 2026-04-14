@@ -3,7 +3,7 @@ import { RouterView, RouterLink } from 'vue-router'
 
 // daftar menu buat di sidebar sesuai mockup m04
 const menuItems = [
-  { name: 'Dashboard', path: '/dashboard' },
+  { name: 'Dashboard', path: '/' },
   { name: 'Vehicles', path: '/vehicles' },
   { name: 'GPS Providers', path: '/gps-providers' },
   { name: 'Live Map', path: '/live-map' },

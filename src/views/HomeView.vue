@@ -14,59 +14,57 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-zinc-50 p-4 sm:p-8 text-left">
-    <div class="max-w-7xl mx-auto space-y-6">
+  <div class="max-w-[1000px] mx-auto pb-12">
+    
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+      <div>
+        <h1 class="text-[17px] font-semibold tracking-tight text-[#1a1916]">Mining Dashboard</h1>
+        <p class="text-[12px] text-[#9e9d96] mt-[1px]">
+          selamat datang kembali,
+          <span class="font-medium text-[#1a1916]">{{ auth.user?.name || 'pengguna' }}</span>
+          <span class="mx-2 text-black/20">|</span>
+          <span class="px-1.5 py-0.5 bg-[#f0efe9] rounded text-[10px] font-bold uppercase tracking-widest text-[#6b6a64]">
+            {{ auth.role }}
+          </span>
+        </p>
+      </div>
 
-      <header
-        class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl border border-zinc-200 shadow-sm gap-4">
-        <div class="space-y-1">
-          <h1 class="text-2xl font-bold text-zinc-900 tracking-tight">Mining Dashboard</h1>
-          <p class="text-sm text-zinc-500">
-            Selamat datang kembali,
-            <span class="font-semibold text-zinc-800">{{ auth.user?.name || 'Pengguna' }}</span>
-            <span class="mx-2 text-zinc-300">|</span>
-            <span class="px-2 py-0.5 bg-zinc-100 rounded text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-              {{ auth.role }}
-            </span>
-          </p>
-        </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <router-link to="/vehicles" class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
+          <i class="pi pi-car text-[11px]"></i> kelola kendaraan
+        </router-link>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <router-link to="/vehicles">
-            <Button label="Kelola Kendaraan" icon="pi pi-car" size="small" />
-          </router-link>
+        <router-link v-if="auth.isAdmin" to="/users" class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
+          <i class="pi pi-users text-[11px]"></i> kelola user
+        </router-link>
 
-          <router-link v-if="auth.isAdmin" to="/users">
-            <Button label="Kelola User" icon="pi pi-users" severity="secondary" size="small" outlined />
-          </router-link>
+        <router-link to="/profile" class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
+          <i class="pi pi-user-edit text-[11px]"></i> edit profil
+        </router-link>
 
-          <router-link to="/profile">
-            <Button label="Edit Profil" icon="pi pi-user-edit" severity="secondary" size="small" outlined />
-          </router-link>
+        <div class="h-6 w-[1px] bg-black/10 mx-1 hidden md:block"></div>
 
-          <div class="h-8 w-[1px] bg-zinc-200 mx-1 hidden md:block"></div>
-
-          <Button label="Keluar" icon="pi pi-sign-out" severity="danger" size="small" @click="handleLogout" />
-        </div>
-      </header>
-
-      <section class="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm min-h-[600px] relative overflow-hidden">
-        <div
-          class="absolute top-6 left-6 z-[1000] bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-zinc-200 shadow-sm">
-          <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Live Monitoring Area</p>
-        </div>
-
-        <MapBase />
-      </section>
-
+        <button @click="handleLogout" class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md border border-[#a32d2d]/30 bg-[#fcebeb] text-[#a32d2d] hover:bg-[#f8d7d7] transition-colors cursor-pointer">
+          <i class="pi pi-sign-out text-[11px]"></i> keluar
+        </button>
+      </div>
     </div>
-  </main>
+
+    <div class="bg-white border border-black/10 rounded-[16px] p-5 shadow-sm">
+      <div class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-4 pb-2 border-b border-black/10">
+        live monitoring area
+      </div>
+      <div class="relative w-full rounded-xl overflow-hidden border border-black/10">
+        <MapBase />
+      </div>
+    </div>
+
+  </div>
 </template>
 
 <style scoped>
 :deep(.leaflet-container) {
   width: 100%;
   height: 600px;
-  border-radius: 8px;
 }
 </style>
