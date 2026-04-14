@@ -10,8 +10,8 @@ onMounted(() => {
 
     new maplibregl.Map({
         container: mapContainer.value,
-        style: 'https://demotiles.maplibre.org/style.json', // style peta dummy bawaan maplibre buat ngetes
-        center: [117.0, -2.0], // koordinat tengah indonesia
+        style: 'https://demotiles.maplibre.org/style.json',
+        center: [117.0, -2.0],
         zoom: 4,
     })
 })

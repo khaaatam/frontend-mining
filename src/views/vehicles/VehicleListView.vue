@@ -145,108 +145,126 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="p-6 bg-white rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Vehicle Management</h1>
-            <Button v-if="canManage" label="Tambah Kendaraan" icon="pi pi-plus" @click="goToAdd"
-                class="p-button-success" />
+    <div class="max-w-[1000px] mx-auto pb-12">
+
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-[17px] font-semibold tracking-tight text-[#1a1916]">Vehicle Management</h1>
+                <p class="text-[12px] text-[#9e9d96] mt-[1px]">Kelola data aset kendaraan tambang</p>
+            </div>
+            <button v-if="canManage" @click="goToAdd"
+                class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md bg-[#1a1916] text-white hover:bg-black transition-colors">
+                <i class="pi pi-plus text-[11px]"></i> tambah kendaraan
+            </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-md border border-gray-200">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cari Asset</label>
-                <InputText v-model="filters.asset_number" placeholder="Contoh: VEH-123" class="w-full" />
+        <div class="bg-white border border-black/10 rounded-[16px] p-5 mb-5 shadow-sm">
+            <div
+                class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-4 pb-2 border-b border-black/10">
+                filter pencarian
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <Select v-model="filters.status" :options="statusOptions" optionLabel="label" optionValue="value"
-                    placeholder="Semua Status" class="w-full" showClear />
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Kendaraan</label>
-                <Select v-model="filters.vehicle_type_id" :options="vehicleTypes" optionLabel="label"
-                    optionValue="value" placeholder="Semua Tipe" class="w-full" showClear />
-            </div>
-            <div class="flex items-end">
-                <Button label="Refresh" icon="pi pi-refresh" @click="fetchVehicles" class="p-button-outlined w-full" />
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[12px] font-medium text-[#6b6a64]">Cari Asset</label>
+                    <input type="text" v-model="filters.asset_number" placeholder="Contoh: VEH-123"
+                        class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916] placeholder:text-black/30" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[12px] font-medium text-[#6b6a64]">Status</label>
+                    <select v-model="filters.status"
+                        class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]">
+                        <option :value="null">Semua Status</option>
+                        <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}
+                        </option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[12px] font-medium text-[#6b6a64]">Tipe Kendaraan</label>
+                    <select v-model="filters.vehicle_type_id"
+                        class="w-full px-3 py-2 font-sans text-[13px] bg-white border border-black/20 rounded-md text-[#1a1916] outline-none focus:border-[#1a1916]">
+                        <option :value="null">Semua Tipe</option>
+                        <option v-for="type in vehicleTypes" :key="type.value" :value="type.value">{{ type.label }}
+                        </option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <button @click="fetchVehicles"
+                        class="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
+                        <i class="pi pi-refresh text-[11px]"></i> refresh data
+                    </button>
+                </div>
             </div>
         </div>
 
-        <DataTable :value="vehicles" :loading="loading" scrollable scrollHeight="500px"
-            :virtualScrollerOptions="{ itemSize: 60 }" @row-click="goToDetail" class="p-datatable-sm" rowHover
-            stripedRows>
-            <template #empty>
-                <div class="text-center p-4">Tidak ada data kendaraan ditemukan.</div>
-            </template>
+        <div class="bg-white border border-black/10 rounded-[16px] overflow-hidden shadow-sm">
+            <div
+                class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_50px] gap-3 px-5 py-3 bg-[#f0efe9] border-b border-black/10 text-[11px] font-bold tracking-[0.05em] uppercase text-[#9e9d96]">
+                <span>Asset Number</span>
+                <span>Tipe</span>
+                <span>Plat Nomor</span>
+                <span>Operator</span>
+                <span>Status</span>
+                <span>Last Seen</span>
+                <span class="text-right" v-if="isAdmin">Aksi</span>
+                <span v-else></span>
+            </div>
 
-            <Column field="asset_number" header="Asset Number" style="min-width: 150px"></Column>
+            <div v-if="loading" class="text-center p-8 text-[13px] text-[#6b6a64]">
+                Memuat data kendaraan...
+            </div>
 
-            <Column header="Tipe" style="min-width: 150px">
-                <template #body="{ data }">
-                    {{ data.vehicle_type?.name || '-' }}
-                </template>
-            </Column>
+            <div v-else-if="!vehicles || vehicles.length === 0" class="text-center p-8 text-[13px] text-[#6b6a64]">
+                Tidak ada data kendaraan ditemukan.
+            </div>
 
-            <Column field="plate_number" header="Plat Nomor" style="min-width: 150px"></Column>
+            <div v-else class="flex flex-col">
+                <div v-for="v in vehicles" :key="v.id" @click="goToDetail({ data: v })"
+                    class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_50px] gap-3 px-5 py-3.5 border-b border-black/10 text-[13px] items-center hover:bg-[#f0efe9]/40 transition-colors last:border-b-0 cursor-pointer">
+                    <span class="font-semibold text-[#1a1916]">{{ v.asset_number }}</span>
+                    <span class="text-[#6b6a64]">{{ v.vehicle_type?.name || '-' }}</span>
+                    <span class="font-mono text-[12px] text-[#6b6a64]">{{ v.plate_number }}</span>
+                    <span class="text-[#6b6a64]">{{ v.current_operator?.name || 'Belum di-assign' }}</span>
 
-            <Column header="Operator" style="min-width: 150px">
-                <template #body="{ data }">
-                    {{ data.current_operator?.name || 'Belum di-assign' }}
-                </template>
-            </Column>
-
-            <Column header="Status" style="min-width: 150px">
-                <template #body="{ data }">
-                    <div v-if="canManage" @click.stop>
-                        <Select :modelValue="data.status" @update:modelValue="updateStatus(data.id, $event)"
-                            :options="statusOptions" optionLabel="label" optionValue="value" class="ghost-select">
-                            <template #value="slotProps">
-                                <VehicleStatusBadge v-if="slotProps.value" :status="slotProps.value" is-dropdown />
-                                <span v-else>Pilih Status</span>
-                            </template>
-                            <template #option="slotProps">
-                                <VehicleStatusBadge :status="slotProps.option.value" />
-                            </template>
-                            <template #dropdownicon>
-                                <span></span>
-                            </template>
-                        </Select>
+                    <div class="min-w-0">
+                        <div v-if="canManage" @click.stop>
+                            <Select :modelValue="v.status" @update:modelValue="updateStatus(v.id, $event)"
+                                :options="statusOptions" optionLabel="label" optionValue="value" class="ghost-select">
+                                <template #value="slotProps">
+                                    <VehicleStatusBadge v-if="slotProps.value" :status="slotProps.value" is-dropdown />
+                                    <span v-else>Pilih Status</span>
+                                </template>
+                                <template #option="slotProps">
+                                    <VehicleStatusBadge :status="slotProps.option.value" />
+                                </template>
+                                <template #dropdownicon>
+                                    <span></span>
+                                </template>
+                            </Select>
+                        </div>
+                        <div v-else>
+                            <VehicleStatusBadge :status="v.status" />
+                        </div>
                     </div>
-                    <div v-else>
-                        <VehicleStatusBadge :status="data.status" />
-                    </div>
-                </template>
-            </Column>
 
-            <Column header="Last Seen" style="min-width: 150px">
-                <template #body="{ data }">
-                    {{ data.last_seen_at ? new Date(data.last_seen_at).toLocaleString('id-ID') : '-' }}
-                </template>
-            </Column>
+                    <span class="text-[#9e9d96]">
+                        {{ v.last_seen_at ? new Date(v.last_seen_at).toLocaleString('id-ID') : '-' }}
+                    </span>
 
-            <Column v-if="isAdmin" style="min-width: 100px">
-                <template #header>
-                    <div class="flex justify-center w-full font-semibold">
-                        Aksi
+                    <div class="text-right">
+                        <button v-if="isAdmin" @click.stop="deleteVehicle(v.id)" title="Hapus Kendaraan"
+                            class="text-[#a32d2d] hover:text-red-700 p-1 rounded transition-colors">
+                            <i class="pi pi-trash text-[13px]"></i>
+                        </button>
                     </div>
-                </template>
+                </div>
+            </div>
+        </div>
 
-                <template #body="{ data }">
-                    <div class="flex justify-center w-full">
-                        <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm"
-                            @click.stop="deleteVehicle(data.id)" title="Hapus Kendaraan" />
-                    </div>
-                </template>
-            </Column>
-        </DataTable>
     </div>
 </template>
 
 <style scoped>
-:deep(.p-datatable-tbody > tr) {
-    cursor: pointer;
-}
-
+/* css ini tetep dipertahanin khusus buat ngereset style dropdown primevue pas lagi ngerubah status */
 :deep(.ghost-select) {
     border: none !important;
     background: transparent !important;
