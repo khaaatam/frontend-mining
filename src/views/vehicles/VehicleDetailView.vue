@@ -85,6 +85,11 @@ const fetchProviders = async () => {
 }
 
 const submitAssignment = async () => {
+    if (!gpsForm.gps_provider_id || !gpsForm.gps_device_id) {
+        toast({ title: 'Error', description: 'Provider dan IMEI harus diisi blay', variant: 'destructive' })
+        return
+    }
+
     isSubmitting.value = true
     try {
         await axios.patch(`http://127.0.0.1:8000/api/vehicles/${route.params.id}/gps-link`, gpsForm, {
@@ -92,17 +97,19 @@ const submitAssignment = async () => {
         })
         toast({ title: 'Berhasil', description: 'GPS berhasil dipasang' })
 
-        // WAJIB PANGGIL INI LAGI BIA DATANYA FRESH
+        // REFRESH SEMUA DATA
         await fetchVehicleDetail()
-    } catch (error) {
-        toast({ title: 'Error', description: 'Gagal', variant: 'destructive' })
+        await fetchProviders() // Biar total 'linked vehicles' di mana-mana ikut update
+    } catch (error: any) {
+        const msg = error.response?.data?.message || 'Gagal melakukan assignment'
+        toast({ title: 'Error', description: msg, variant: 'destructive' })
     } finally {
         isSubmitting.value = false
     }
 }
 
 const unlinkDevice = async () => {
-    if (!window.confirm('Yakin ingin mencopot perangkat GPS dari kendaraan ini?')) return
+    if (!window.confirm('Yakin mau nyopot perangkat GPS?')) return
 
     isSubmitting.value = true
     try {
@@ -112,8 +119,11 @@ const unlinkDevice = async () => {
         }, {
             headers: { Authorization: `Bearer ${auth.token}` }
         })
-        toast({ title: 'Berhasil', description: 'GPS berhasil dicopot' })
+        toast({ title: 'Berhasil', description: 'GPS dicopot blay' })
+
+        // REFRESH SEMUA DATA
         await fetchVehicleDetail()
+        await fetchProviders()
     } catch (error) {
         toast({ title: 'Error', description: 'Gagal mencopot GPS', variant: 'destructive' })
     } finally {
