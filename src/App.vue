@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView, RouterLink, useRoute } from 'vue-router'
+import { Toaster } from '@/components/ui/toast'
 
 const route = useRoute()
 
@@ -52,4 +53,5 @@ const menuItems = [
     </main>
 
   </div>
+  <Toaster />
 </template>
