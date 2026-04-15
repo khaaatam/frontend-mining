@@ -59,6 +59,24 @@ const router = createRouter({
       component: () => import('@/views/vehicles/VehicleDetailView.vue'),
       meta: { authRequired: true }
     },
+    {
+      path: '/gps-providers',
+      name: 'gps-providers.index',
+      component: () => import('@/views/gps/GpsProviderIndex.vue'),
+      meta: { title: 'GPS Providers' }
+    },
+    {
+      path: '/gps-providers/create',
+      name: 'gps-providers.create',
+      component: () => import('@/views/gps/GpsProviderForm.vue'),
+      meta: { title: 'Add GPS Provider' }
+    },
+    {
+      path: '/gps-providers/:id/edit',
+      name: 'gps-providers.edit',
+      component: () => import('@/views/gps/GpsProviderForm.vue'),
+      meta: { title: 'Edit GPS Provider' }
+    },
   ]
 })
 
