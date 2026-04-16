@@ -149,8 +149,8 @@ onMounted(() => {
                 <p class="text-[12px] text-[#9e9d96] mt-[1px]">Kelola data aset kendaraan tambang</p>
             </div>
             <button v-if="canManage" @click="goToAdd"
-                class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md bg-[#1a1916] text-white hover:bg-black transition-colors">
-                <i class="pi pi-plus text-[11px]"></i> tambah kendaraan
+                class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md bg-[#1a1916] text-white hover:bg-black transition-colors shrink-0">
+                <i class="pi pi-plus text-[11px]"></i> <span class="hidden sm:inline">tambah kendaraan</span>
             </button>
         </div>
 
@@ -192,65 +192,73 @@ onMounted(() => {
             </div>
         </div>
 
-        <div class="bg-white border border-black/10 rounded-[16px] overflow-hidden shadow-sm">
-            <div
-                class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_50px] gap-3 px-5 py-3 bg-[#f0efe9] border-b border-black/10 text-[11px] font-bold tracking-[0.05em] uppercase text-[#9e9d96]">
-                <span>Asset Number</span>
-                <span>Tipe</span>
-                <span>Plat Nomor</span>
-                <span>Operator</span>
-                <span>Status</span>
-                <span>Last Seen</span>
-                <span class="text-right" v-if="isAdmin">Aksi</span>
-                <span v-else></span>
-            </div>
+        <div class="bg-white border border-black/10 rounded-[16px] shadow-sm">
+            <div class="w-full overflow-x-auto rounded-[16px]">
 
-            <div v-if="loading" class="text-center p-8 text-[13px] text-[#6b6a64]">
-                Memuat data kendaraan...
-            </div>
+                <div
+                    class="min-w-[800px] grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_50px] gap-3 px-5 py-3 bg-[#f0efe9] border-b border-black/10 text-[11px] font-bold tracking-[0.05em] uppercase text-[#9e9d96]">
+                    <span>Asset Number</span>
+                    <span>Tipe</span>
+                    <span>Plat Nomor</span>
+                    <span>Operator</span>
+                    <span>Status</span>
+                    <span>Last Seen</span>
+                    <span class="text-right" v-if="isAdmin">Aksi</span>
+                    <span v-else></span>
+                </div>
 
-            <div v-else-if="!vehicles || vehicles.length === 0" class="text-center p-8 text-[13px] text-[#6b6a64]">
-                Tidak ada data kendaraan ditemukan.
-            </div>
+                <div v-if="loading" class="text-center p-8 text-[13px] text-[#6b6a64] min-w-[800px]">
+                    Memuat data kendaraan...
+                </div>
 
-            <div v-else class="flex flex-col">
-                <div v-for="v in vehicles" :key="v.id" @click="goToDetail({ data: v })"
-                    class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_50px] gap-3 px-5 py-3.5 border-b border-black/10 text-[13px] items-center hover:bg-[#f0efe9]/40 transition-colors last:border-b-0 cursor-pointer">
-                    <span class="font-semibold text-[#1a1916]">{{ v.asset_number }}</span>
-                    <span class="text-[#6b6a64]">{{ v.vehicle_type?.name || '-' }}</span>
-                    <span class="font-mono text-[12px] text-[#6b6a64]">{{ v.plate_number }}</span>
-                    <span class="text-[#6b6a64]">{{ v.current_operator?.name || 'Belum di-assign' }}</span>
+                <div v-else-if="!vehicles || vehicles.length === 0"
+                    class="text-center p-8 text-[13px] text-[#6b6a64] min-w-[800px]">
+                    Tidak ada data kendaraan ditemukan.
+                </div>
 
-                    <div class="min-w-0">
-                        <div v-if="canManage" @click.stop>
-                            <Select :modelValue="v.status" @update:modelValue="updateStatus(v.id, $event)"
-                                :options="statusOptions" optionLabel="label" optionValue="value" class="ghost-select">
-                                <template #value="slotProps">
-                                    <VehicleStatusBadge v-if="slotProps.value" :status="slotProps.value" is-dropdown />
-                                    <span v-else>Pilih Status</span>
-                                </template>
-                                <template #option="slotProps">
-                                    <VehicleStatusBadge :status="slotProps.option.value" />
-                                </template>
-                                <template #dropdownicon>
-                                    <span></span>
-                                </template>
-                            </Select>
+                <div v-else class="flex flex-col min-w-[800px]">
+                    <div v-for="v in vehicles" :key="v.id" @click="goToDetail({ data: v })"
+                        class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1fr)_50px] gap-3 px-5 py-3.5 border-b border-black/10 text-[13px] items-center hover:bg-[#f0efe9]/40 transition-colors last:border-b-0 cursor-pointer">
+                        <span class="font-semibold text-[#1a1916] whitespace-nowrap">{{ v.asset_number }}</span>
+                        <span class="text-[#6b6a64] whitespace-nowrap overflow-hidden text-ellipsis">{{
+                            v.vehicle_type?.name || '-' }}</span>
+                        <span class="font-mono text-[12px] text-[#6b6a64] whitespace-nowrap">{{ v.plate_number }}</span>
+                        <span class="text-[#6b6a64] whitespace-nowrap overflow-hidden text-ellipsis">{{
+                            v.current_operator?.name || 'Belum di-assign' }}</span>
+
+                        <div class="min-w-0">
+                            <div v-if="canManage" @click.stop>
+                                <Select :modelValue="v.status" @update:modelValue="updateStatus(v.id, $event)"
+                                    :options="statusOptions" optionLabel="label" optionValue="value"
+                                    class="ghost-select">
+                                    <template #value="slotProps">
+                                        <VehicleStatusBadge v-if="slotProps.value" :status="slotProps.value"
+                                            is-dropdown />
+                                        <span v-else>Pilih Status</span>
+                                    </template>
+                                    <template #option="slotProps">
+                                        <VehicleStatusBadge :status="slotProps.option.value" />
+                                    </template>
+                                    <template #dropdownicon>
+                                        <span></span>
+                                    </template>
+                                </Select>
+                            </div>
+                            <div v-else>
+                                <VehicleStatusBadge :status="v.status" />
+                            </div>
                         </div>
-                        <div v-else>
-                            <VehicleStatusBadge :status="v.status" />
+
+                        <span class="text-[#9e9d96] whitespace-nowrap text-[12px]">
+                            {{ v.last_seen_at ? new Date(v.last_seen_at).toLocaleString('id-ID') : '-' }}
+                        </span>
+
+                        <div class="text-right">
+                            <button v-if="isAdmin" @click.stop="deleteVehicle(v.id)" title="Hapus Kendaraan"
+                                class="text-[#a32d2d] hover:text-red-700 p-1 rounded transition-colors">
+                                <i class="pi pi-trash text-[13px]"></i>
+                            </button>
                         </div>
-                    </div>
-
-                    <span class="text-[#9e9d96]">
-                        {{ v.last_seen_at ? new Date(v.last_seen_at).toLocaleString('id-ID') : '-' }}
-                    </span>
-
-                    <div class="text-right">
-                        <button v-if="isAdmin" @click.stop="deleteVehicle(v.id)" title="Hapus Kendaraan"
-                            class="text-[#a32d2d] hover:text-red-700 p-1 rounded transition-colors">
-                            <i class="pi pi-trash text-[13px]"></i>
-                        </button>
                     </div>
                 </div>
             </div>
