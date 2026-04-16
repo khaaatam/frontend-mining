@@ -30,11 +30,6 @@ const handleLogout = () => {
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <router-link to="/vehicles"
-          class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
-          <i class="pi pi-car text-[11px]"></i> kelola kendaraan
-        </router-link>
-
         <router-link v-if="auth.isAdmin" to="/users"
           class="inline-flex items-center gap-1.5 px-4 py-[7px] text-[13px] font-medium rounded-md border border-black/20 bg-white text-[#1a1916] hover:bg-[#f0efe9] transition-colors">
           <i class="pi pi-users text-[11px]"></i> kelola user

@@ -6,7 +6,7 @@
                 <h1 class="text-2xl font-bold text-gray-900">GPS providers</h1>
                 <p class="text-gray-500 text-sm mt-1">Manage external GPS integrations</p>
             </div>
-            <router-link to="/gps-providers/create"
+            <router-link v-if="isAdmin" to="/gps-providers/create"
                 class="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-black transition whitespace-nowrap">
                 + add provider
             </router-link>
@@ -47,7 +47,7 @@
                             <th
                                 class="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
                                 Status</th>
-                            <th class="px-6 py-4"></th>
+                            <th v-if="isAdmin" class="px-6 py-4"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -74,7 +74,7 @@
                                     {{ item.is_active ? 'ACTIVE' : 'INACTIVE' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-5 text-right">
+                            <td v-if="isAdmin" class="px-6 py-5 text-right">
                                 <router-link :to="`/gps-providers/${item.id}/edit`"
                                     class="inline-block border border-gray-300 bg-white text-gray-600 px-4 py-1.5 rounded-full text-xs font-medium hover:bg-stone-100 transition">
                                     edit
@@ -82,7 +82,7 @@
                             </td>
                         </tr>
                         <tr v-if="providers.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
+                            <td :colspan="isAdmin ? 6 : 5" class="px-6 py-12 text-center text-sm text-gray-500">
                                 No GPS providers configured.
                             </td>
                         </tr>
@@ -96,8 +96,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
 
+const auth = useAuthStore();
 const providers = ref<any[]>([]);
+
+/* Memeriksa apakah pengguna saat ini memiliki akses sebagai admin. */
+const isAdmin = computed(() => {
+    return (auth.role || '').toLowerCase() === 'admin';
+});
 
 const activeCount = computed(() => {
     return providers.value.filter(p => p.is_active).length;
@@ -107,11 +114,11 @@ const linkedVehiclesCount = computed(() => {
     return providers.value.reduce((total, p) => total + (p.vehicles_count || 0), 0);
 });
 
+/* Mengambil token otorisasi langsung dari store autentikasi. */
 const getHeaders = () => {
-    const token = localStorage.getItem('token') || '';
     return {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${auth.token}`
     };
 };
 
@@ -120,7 +127,8 @@ const fetchProviders = async () => {
         const response = await axios.get('http://localhost:8000/api/gps-providers', {
             headers: getHeaders()
         });
-        providers.value = response.data;
+        /* Menangani kemungkinan respons data dibungkus dalam objek paginasi atau resource. */
+        providers.value = response.data.data ? response.data.data : response.data;
     } catch (error) {
         console.error("Failed to fetch providers:", error);
     }

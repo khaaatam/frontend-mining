@@ -25,7 +25,7 @@ const handleLogin = async () => {
     try {
         await auth.login(form.value)
         // Kalau berhasil, lempar ke dashboard atau home
-        router.push('/')
+        router.push('/dashboard')
     } catch (err: any) {
         errorMessage.value = err.message || 'Login gagal, cek email/password lu.'
     } finally {

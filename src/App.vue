@@ -1,25 +1,34 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { Toaster } from '@/components/ui/toast'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 
 const isMenuActive = (path: string) => {
   if (path === '/dashboard') return route.path === '/dashboard'
   return route.path.startsWith(path)
 }
 
-// daftar menu buat di sidebar sesuai mockup m04
+/* Konfigurasi menu beserta pembatasan akses hak guna (role) */
 const menuItems = [
-  { name: 'Dashboard', path: '/dashboard' },
-  { name: 'Vehicles', path: '/vehicles' },
-  { name: 'GPS Providers', path: '/gps-providers' },
-  { name: 'Live Map', path: '/live-map' },
-  { name: 'History', path: '/history' },
-  { name: 'Overlays', path: '/overlays' },
-  { name: 'Reports', path: '/reports' },
-  { name: 'Users', path: '/users' }
+  { name: 'Dashboard', path: '/dashboard', roles: ['admin', 'operator', 'viewer'] },
+  { name: 'Vehicles', path: '/vehicles', roles: ['admin', 'operator', 'viewer'] },
+  { name: 'GPS Providers', path: '/gps-providers', roles: ['admin', 'operator'] },
+  { name: 'Live Map', path: '/live-map', roles: ['admin', 'operator', 'viewer'] },
+  { name: 'History', path: '/history', roles: ['admin', 'operator', 'viewer'] },
+  { name: 'Overlays', path: '/overlays', roles: ['admin', 'operator', 'viewer'] },
+  { name: 'Reports', path: '/reports', roles: ['admin', 'operator', 'viewer'] },
+  { name: 'Users', path: '/users', roles: ['admin'] }
 ]
+
+/* Memfilter menu yang akan ditampilkan berdasarkan role dari user yang sedang login */
+const filteredMenuItems = computed(() => {
+  const currentRole = (auth.role || 'viewer').toLowerCase()
+  return menuItems.filter(item => item.roles.includes(currentRole))
+})
 </script>
 
 <template>
@@ -31,7 +40,7 @@ const menuItems = [
       </div>
 
       <nav class="flex flex-col">
-        <RouterLink v-for="item in menuItems" :key="item.path" :to="item.path"
+        <RouterLink v-for="item in filteredMenuItems" :key="item.path" :to="item.path"
           class="group flex items-center gap-3 px-6 py-2.5 text-[13px] text-[#6b6a64] hover:text-[#1a1916] transition-all border-r-[3px]"
           :class="isMenuActive(item.path)
             ? 'bg-[#e8e7e0] !text-[#1a1916] font-medium border-[#1a1916]'

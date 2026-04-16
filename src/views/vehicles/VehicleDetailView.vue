@@ -16,6 +16,7 @@ const activities = ref<any[]>([])
 const providers = ref<any[]>([])
 const loading = ref(true)
 const isSubmitting = ref(false)
+const isLoading = ref(true)
 const activeTab = ref('info')
 
 // pake reactive biar lebih aman dan stabil buat form v-model
@@ -75,12 +76,13 @@ const fetchActivities = async () => {
 
 const fetchProviders = async () => {
     try {
-        const response = await axios.get('http://127.0.0.1:8000/api/gps-providers', {
+        const response = await axios.get('http://127.0.0.1:8000/api/gps-providers-list', {
             headers: { Authorization: `Bearer ${auth.token}` }
         })
         providers.value = response.data || []
     } catch (error) {
-        console.error('Gagal mengambil daftar provider', error)
+        // Log error tetap ada tapi tidak menghentikan loading halaman utama
+        console.warn('Gagal memuat daftar provider, mungkin masalah izin akses.')
     }
 }
 
@@ -327,7 +329,7 @@ const formatDate = (dateString: string) => {
                         <div class="text-[15px] font-semibold text-[#1a1916]">
                             {{ vehicle?.gps_provider?.name || 'Tidak ada perangkat' }}</div>
                         <div class="font-mono text-[11px] text-[#6b6a64] mt-0.5">IMEI: {{ vehicle?.gps_device_id || '-'
-                        }}</div>
+                            }}</div>
                     </div>
                     <div class="flex items-center gap-2 p-2.5 bg-[#f9fafb] rounded-md text-[11px] text-[#6b6a64]">
                         <div class="w-2 h-2 rounded-full"
@@ -338,7 +340,7 @@ const formatDate = (dateString: string) => {
                 </div>
             </div>
 
-            <div class="bg-white border border-[#e5e7eb] rounded-[12px] p-6 shadow-sm">
+            <div v-if="canManage" class="bg-white border border-[#e5e7eb] rounded-[12px] p-6 shadow-sm">
                 <div
                     class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-5 pb-2 border-b border-[#e5e7eb]">
                     {{ vehicle?.gps_provider_id ? 'reassign device' : 'assign device' }}
