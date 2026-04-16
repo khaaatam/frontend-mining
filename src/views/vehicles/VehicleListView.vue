@@ -5,10 +5,6 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/components/ui/toast/use-toast'
 import Select from 'primevue/select'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
 import VehicleStatusBadge from '@/components/VehicleStatusBadge.vue'
 
 const router = useRouter()

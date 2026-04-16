@@ -67,7 +67,7 @@ const fetchActivities = async () => {
         const response = await axios.get(`http://127.0.0.1:8000/api/vehicles/${route.params.id}/activities`, {
             headers: { Authorization: `Bearer ${auth.token}` }
         })
-        activities.value = response.data.data || []
+        activities.value = response.data.data.data || []
     } catch (error) {
         console.warn('Endpoint log aktivitas belum tersedia')
     }
@@ -250,7 +250,7 @@ const formatDate = (dateString: string) => {
                             Date(log.created_at).toLocaleString('id-ID') }}</p>
                         <p class="text-[12px] font-medium text-[#1a1916] leading-tight">{{ log.description }}</p>
                         <p class="text-[11px] text-[#6b6a64] mt-1 italic capitalize">By: {{ log.causer?.name || 'System'
-                            }}</p>
+                        }}</p>
                     </div>
                 </div>
             </div>
@@ -327,7 +327,7 @@ const formatDate = (dateString: string) => {
                         <div class="text-[15px] font-semibold text-[#1a1916]">
                             {{ vehicle?.gps_provider?.name || 'Tidak ada perangkat' }}</div>
                         <div class="font-mono text-[11px] text-[#6b6a64] mt-0.5">IMEI: {{ vehicle?.gps_device_id || '-'
-                            }}</div>
+                        }}</div>
                     </div>
                     <div class="flex items-center gap-2 p-2.5 bg-[#f9fafb] rounded-md text-[11px] text-[#6b6a64]">
                         <div class="w-2 h-2 rounded-full"

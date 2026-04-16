@@ -25,7 +25,7 @@ const router = createRouter({
       path: '/users',
       name: 'user-management',
       component: () => import('../views/UserManagementView.vue'),
-      meta: { authRequired: true, role: 'Admin' }
+      meta: { authRequired: true, role: 'admin' }
     },
     {
       path: '/profile',

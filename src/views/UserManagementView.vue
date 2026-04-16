@@ -16,13 +16,13 @@ const userForm = ref({
     name: '',
     email: '',
     password: '',
-    role: 'Operator'
+    role: 'operator'
 })
 
 const roles = ref([
-    { label: 'Admin', value: 'Admin' },
-    { label: 'Operator', value: 'Operator' },
-    { label: 'Viewer', value: 'Viewer' }
+    { label: 'Admin', value: 'admin' },
+    { label: 'Operator', value: 'operator' },
+    { label: 'Viewer', value: 'viewer' }
 ])
 
 const fetchUsers = async () => {
@@ -40,7 +40,7 @@ const fetchUsers = async () => {
 }
 
 const openNew = () => {
-    userForm.value = { name: '', email: '', password: '', role: 'Operator' }
+    userForm.value = { name: '', email: '', password: '', role: 'operator' }
     isEdit.value = false
     submitted.value = false
     displayModal.value = true
@@ -52,7 +52,7 @@ const editUser = (user: any) => {
         name: user.name,
         email: user.email,
         password: '',
-        role: user.roles?.[0]?.name || 'Operator'
+        role: user.roles?.[0]?.name || 'operator'
     }
     isEdit.value = true
     submitted.value = false
@@ -137,7 +137,7 @@ onMounted(() => {
                     <div>
                         <span
                             class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#f0efe9] text-[#6b6a64]">
-                            {{ user.roles?.[0]?.name || 'Viewer' }}
+                            {{ user.roles?.[0]?.name || 'viewer' }}
                         </span>
                     </div>
                     <div class="flex justify-end gap-1">
@@ -176,7 +176,7 @@ onMounted(() => {
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-[12px] font-medium text-[#6b6a64]">Kata Sandi {{ isEdit ? '(Opsional)' : ''
-                    }}</label>
+                        }}</label>
                     <input v-model="userForm.password" type="password" placeholder="********"
                         class="w-full px-3 py-2 text-[13px] border border-[#d1d5db] rounded-md outline-none focus:border-[#1a1916]" />
                     <p v-if="isEdit" class="text-[11px] text-[#9e9d96] italic">Kosongkan jika tidak ingin mengubah
