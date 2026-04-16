@@ -88,7 +88,7 @@ const fetchProviders = async () => {
 
 const submitAssignment = async () => {
     if (!gpsForm.gps_provider_id || !gpsForm.gps_device_id) {
-        toast({ title: 'Error', description: 'Provider dan IMEI harus diisi blay', variant: 'destructive' })
+        toast({ title: 'Error', description: 'Provider dan IMEI harus diisi', variant: 'destructive' })
         return
     }
 
@@ -106,7 +106,7 @@ const submitAssignment = async () => {
 
         // ambil pesan error dari laravel validation
         const serverError = error.response?.data?.errors;
-        let errorMessage = 'terjadi kesalahan pada server blay';
+        let errorMessage = 'terjadi kesalahan pada server';
 
         if (serverError) {
             // ambil pesan pertama dari array error gps_device_id
@@ -136,7 +136,7 @@ const unlinkDevice = async () => {
         }, {
             headers: { Authorization: `Bearer ${auth.token}` }
         })
-        toast({ title: 'Berhasil', description: 'GPS dicopot blay' })
+        toast({ title: 'Berhasil', description: 'GPS dicopot' })
 
         // REFRESH SEMUA DATA
         await fetchVehicleDetail()
