@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
 
         return response.data
       } catch (error: any) {
-        console.error('error login frontend:', error) // gw tambahin log ini biar gampang nyari tau kalo ada yg crash lagi
+        console.error('error login frontend:', error) 
         throw error.response?.data || { message: 'Terjadi kesalahan sistem' }
       }
     },
@@ -51,4 +51,4 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('user')
     },
   },
-})
+}) 

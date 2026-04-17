@@ -7,14 +7,11 @@ import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const auth = useAuthStore()
 
-/* State untuk sidebar dan deteksi perangkat mobile */
 const isMobile = ref(false)
 const isSidebarOpen = ref(true)
 
-/* Fungsi untuk mendeteksi ukuran layar secara real-time */
 const checkScreenSize = () => {
   isMobile.value = window.innerWidth < 768
-  // Jika di HP, sidebar otomatis tertutup. Jika di Desktop, terbuka.
   if (isMobile.value) {
     isSidebarOpen.value = false
   } else {
@@ -35,7 +32,6 @@ const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
-/* Otomatis menutup sidebar di mobile setelah menu diklik / pindah halaman */
 watch(() => route.path, () => {
   if (isMobile.value) {
     isSidebarOpen.value = false

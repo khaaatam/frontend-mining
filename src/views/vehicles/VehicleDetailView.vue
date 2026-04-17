@@ -103,6 +103,7 @@ const submitAssignment = async () => {
         await fetchProviders()
     } catch (error: any) {
         console.error("error detail:", error.response?.data); // intip dulu di console
+        console.error("error detail:", error.response?.data);
 
         // ambil pesan error dari laravel validation
         const serverError = error.response?.data?.errors;
