@@ -69,14 +69,20 @@ const router = createRouter({
       path: '/gps-providers/create',
       name: 'gps-providers.create',
       component: () => import('@/views/gps/GpsProviderForm.vue'),
-      meta: { title: 'Add GPS Provider' }
+      meta: { title: 'Add GPS Provider', authRequired: true }
     },
     {
       path: '/gps-providers/:id/edit',
       name: 'gps-providers.edit',
       component: () => import('@/views/gps/GpsProviderForm.vue'),
-      meta: { title: 'Edit GPS Provider' }
+      meta: { title: 'Edit GPS Provider', authRequired: true }
     },
+    {
+      path: '/live-map',
+      name: 'LiveMap',
+      component: () => import('@/views/map/LiveMapView.vue'),
+      meta: { authRequired: true, hideGlobalSidebar: true }
+    }
   ]
 })
 

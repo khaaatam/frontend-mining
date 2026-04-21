@@ -43,16 +43,6 @@ const handleLogout = () => {
         </button>
       </div>
     </div>
-
-    <div class="bg-white border border-black/10 rounded-[16px] p-5 shadow-sm">
-      <div class="text-[10px] font-bold tracking-[0.1em] uppercase text-[#9e9d96] mb-4 pb-2 border-b border-black/10">
-        live monitoring area
-      </div>
-      <div class="relative w-full rounded-xl overflow-hidden border border-black/10">
-        <MapBase />
-      </div>
-    </div>
-
   </div>
 </template>
 

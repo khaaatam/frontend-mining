@@ -42,6 +42,12 @@ const isLoginPage = computed(() => {
   return route.path === '/login'
 })
 
+// === LOGIC BARU: Deteksi rute Live Map ===
+const isMapRoute = computed(() => {
+  // Menyesuaikan dengan path di menuItems lu yaitu '/live-map'
+  return route.path.startsWith('/live-map')
+})
+
 const isMenuActive = (path: string) => {
   if (path === '/dashboard') return route.path === '/dashboard'
   return route.path.startsWith(path)
@@ -65,11 +71,12 @@ const filteredMenuItems = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col md:flex-row min-h-screen text-[#1a1916] font-sans antialiased bg-gray-50">
+  <div class="flex text-[#1a1916] font-sans antialiased bg-gray-50 transition-colors"
+    :class="isMapRoute ? 'flex-col h-screen w-screen overflow-hidden' : 'flex-col md:flex-row min-h-screen'">
 
     <template v-if="!isLoginPage">
 
-      <div
+      <div v-if="!isMapRoute"
         class="md:hidden flex items-center justify-between bg-white border-b border-black/10 px-6 py-4 shrink-0 shadow-sm z-30">
         <span class="font-bold text-[16px] tracking-tight">Mining Tracking</span>
         <button @click="toggleSidebar" class="p-2 -mr-2 text-[#6b6a64] hover:text-[#1a1916] focus:outline-none">
@@ -77,10 +84,10 @@ const filteredMenuItems = computed(() => {
         </button>
       </div>
 
-      <div v-if="isMobile && isSidebarOpen" @click="isSidebarOpen = false"
+      <div v-if="!isMapRoute && isMobile && isSidebarOpen" @click="isSidebarOpen = false"
         class="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm transition-opacity"></div>
 
-      <aside
+      <aside v-if="!isMapRoute"
         class="fixed inset-y-0 left-0 z-50 shrink-0 bg-[#f5f4f1] border-r border-black/10 py-6 flex flex-col transition-all duration-300 ease-in-out md:relative md:translate-x-0"
         :class="[
           isSidebarOpen ? 'translate-x-0 w-[240px] shadow-2xl md:shadow-none' : '-translate-x-full md:w-[80px]'
@@ -117,12 +124,42 @@ const filteredMenuItems = computed(() => {
         </nav>
       </aside>
 
-      <main class="flex-1 overflow-y-auto bg-white transition-all duration-300 w-full relative">
-        <div class="flex justify-center w-full min-h-full">
-          <div class="w-full max-w-[1000px] p-4 md:p-8">
-            <RouterView />
-          </div>
+      <header v-if="isMapRoute"
+        class="h-[60px] bg-white border-b border-black/10 px-6 flex items-center justify-between shrink-0 z-20 overflow-x-auto">
+        <div class="flex items-center gap-8 min-w-max">
+          <span class="font-bold text-[16px] tracking-tight">Mining Tracking</span>
+
+          <nav class="flex gap-2 h-[60px]">
+            <RouterLink v-for="item in filteredMenuItems" :key="item.path" :to="item.path"
+              class="flex items-center px-4 text-[13px] text-[#6b6a64] hover:text-[#1a1916] border-b-[3px] transition-all font-medium whitespace-nowrap"
+              :class="isMenuActive(item.path) ? 'border-[#1a1916] !text-[#1a1916]' : 'border-transparent'">
+              <i class="pi mr-2 text-[14px]" :class="item.icon"></i>
+              {{ item.name }}
+            </RouterLink>
+          </nav>
         </div>
+
+        <div class="flex items-center gap-3 ml-4">
+          <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center font-bold text-xs">
+            A </div>
+        </div>
+      </header>
+
+      <main class="flex-1 transition-all duration-300 w-full relative"
+        :class="isMapRoute ? 'flex flex-col overflow-hidden bg-slate-100' : 'overflow-y-auto bg-white'">
+
+        <template v-if="!isMapRoute">
+          <div class="flex justify-center w-full min-h-full">
+            <div class="w-full max-w-[1000px] p-4 md:p-8">
+              <RouterView />
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <RouterView />
+        </template>
+
       </main>
 
     </template>
