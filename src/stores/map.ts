@@ -10,7 +10,7 @@ interface MapState {
         typeKey: string
     }
     isPolling: boolean
-    remainingTime: number // Untuk countdown "Live refreshes in Ns"
+    remainingTime: number
     pollingInterval: any
     countdownInterval: any
 }
@@ -25,7 +25,7 @@ export const useMapStore = defineStore('map', {
             typeKey: 'all'
         },
         isPolling: false,
-        remainingTime: 30, // Default 30 detik sesuai mockup
+        remainingTime: 30,
         pollingInterval: null,
         countdownInterval: null
     }),
@@ -42,7 +42,6 @@ export const useMapStore = defineStore('map', {
             })
         },
 
-        // Format ulang jadi GeoJSON untuk dilempar ke peta
         filteredVehiclesGeoJSON(): any {
             return {
                 type: 'FeatureCollection',
@@ -54,10 +53,8 @@ export const useMapStore = defineStore('map', {
     actions: {
         async fetchLive() {
             try {
-                // 1. Ambil token dari localStorage yang disimpen pas login
                 const token = localStorage.getItem('token');
 
-                // 2. Tembak API Laravel lengkap dengan header Authorization Bearer
                 const { data } = await axios.get('http://127.0.0.1:8000/api/map/live', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -66,7 +63,7 @@ export const useMapStore = defineStore('map', {
                 });
 
                 this.vehicles = data;
-                this.remainingTime = 30; // Reset timer
+                this.remainingTime = 30;
 
             } catch (error) {
                 console.error('Failed to fetch live map data:', error);
@@ -77,16 +74,14 @@ export const useMapStore = defineStore('map', {
             if (this.isPolling) return
 
             this.isPolling = true
-            this.fetchLive() // Fetch pertama kali
+            this.fetchLive()
 
-            // Interval untuk hitung mundur detik (UX Live Badge)
             this.countdownInterval = setInterval(() => {
                 if (this.remainingTime > 0) {
                     this.remainingTime--
                 }
             }, 1000)
 
-            // Interval untuk hit data ke backend setiap 30 detik 
             this.pollingInterval = setInterval(() => {
                 this.fetchLive()
             }, 30000)

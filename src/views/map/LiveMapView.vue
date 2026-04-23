@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, toRaw } from 'vue' // <-- toRaw udah di-import biar aman
+import { ref, onMounted, onUnmounted, watch, toRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMapStore } from '@/stores/map'
 import maplibregl from 'maplibre-gl'
@@ -12,36 +12,29 @@ import VehicleStatusBadge from '@/components/VehicleStatusBadge.vue'
 const mapStore = useMapStore()
 const router = useRouter()
 
-// Refs untuk DOM dan Map Instance
 const mapContainer = ref<HTMLElement | null>(null)
 let map: maplibregl.Map | null = null
 
-// Saat komponen dimount, mulai polling dan inisialisasi peta
 onMounted(() => {
     mapStore.startPolling()
     initMap()
 })
 
-// Cleanup saat pindah halaman biar memory nggak bocor
 onUnmounted(() => {
     mapStore.stopPolling()
     if (map) map.remove()
 })
 
-// === KUNCI LIVE UPDATE ===
 watch(() => mapStore.filteredVehiclesGeoJSON, (newData) => {
     if (map && map.getSource('vehicles')) {
-        // JURUS ULTIMATE: Buang Proxy Vue pakai JSON.parse
         const rawData = JSON.parse(JSON.stringify(newData));
         (map.getSource('vehicles') as maplibregl.GeoJSONSource).setData(rawData);
     }
 }, { deep: true })
 
-// Fungsi utama bikin peta
 function initMap() {
     if (!mapContainer.value) return
 
-    // Inisialisasi MapLibre
     map = new maplibregl.Map({
         container: mapContainer.value,
         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -52,19 +45,15 @@ function initMap() {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     map.addControl(new maplibregl.FullscreenControl(), 'top-right')
 
-    // Tunggu map beres loading style
     map.on('load', () => {
-        // 1. Tambah Data Source (Format GeoJSON)
         map!.addSource('vehicles', {
             type: 'geojson',
-            // JURUS ULTIMATE: Eksekusi pas peta pertama dimuat
             data: JSON.parse(JSON.stringify(mapStore.filteredVehiclesGeoJSON)),
             cluster: true,
             clusterMaxZoom: 12,
             clusterRadius: 50
         })
 
-        // 2. Layer Cluster (Bunderan Biru)
         map!.addLayer({
             id: 'clusters',
             type: 'circle',
@@ -76,7 +65,6 @@ function initMap() {
             }
         })
 
-        // 3. Layer Angka di Dalam Cluster
         map!.addLayer({
             id: 'cluster-count',
             type: 'symbol',
@@ -92,7 +80,6 @@ function initMap() {
             }
         })
 
-        // 4. Layer Kendaraan Tunggal (Titik Hijau)
         map!.addLayer({
             id: 'unclustered-point',
             type: 'circle',
@@ -108,7 +95,6 @@ function initMap() {
             }
         })
 
-        // 5. Logic Popup saat Mobil Diklik
         map!.on('click', 'unclustered-point', (e) => {
             const feature = e.features?.[0];
             if (!feature) return;
@@ -151,7 +137,6 @@ function initMap() {
     })
 }
 
-// Fungsi Sidebar Klik -> Kamera map lari ke mobil itu
 function flyToVehicle(feature: any) {
     if (!map) return
     const coordinates = feature.geometry.coordinates
