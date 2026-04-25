@@ -186,7 +186,7 @@ function flyToVehicle(feature: any) {
                         <option value="all">Status: All</option>
                         <option value="active">Active</option>
                         <option value="idle">Idle</option>
-                        <option value="maintenance">Maint</option>
+                        <option value="maintenance">Maintenance</option>
                     </select>
                     <select v-model="mapStore.filters.typeKey"
                         class="text-[12px] font-bold border border-black/10 rounded-lg px-2 h-10 bg-white outline-none cursor-pointer focus:border-[#1a1916]">
@@ -204,7 +204,7 @@ function flyToVehicle(feature: any) {
                     </div>
                     <div class="bg-[#fff9f0] border border-[#ffecd1] p-3 rounded-xl text-center">
                         <p class="text-[#BA7517] text-[18px] font-bold leading-none">{{ mapStore.statusCounts?.idle || 0
-                            }}</p>
+                        }}</p>
                         <p class="text-[#BA7517] text-[10px] font-bold uppercase mt-1">Idle</p>
                     </div>
                     <div class="bg-[#fff5f5] border border-[#ffe3e3] p-3 rounded-xl text-center">
@@ -232,7 +232,7 @@ function flyToVehicle(feature: any) {
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start">
                             <p class="font-bold text-[14px] text-[#1a1916] truncate">{{ vehicle.properties.asset_number
-                                }}</p>
+                            }}</p>
                             <VehicleStatusBadge :status="vehicle.properties.status" />
                         </div>
                         <div class="flex justify-between items-center mt-1">
