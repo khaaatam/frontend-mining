@@ -31,6 +31,16 @@ export const useMapStore = defineStore('map', {
     }),
 
     getters: {
+        statusCounts(state) {
+            if (!state.vehicles || !state.vehicles.features) return { active: 0, idle: 0, maintenance: 0 };
+            const features = state.vehicles.features;
+            return {
+                active: features.filter((f: any) => f.properties.status === 'active').length,
+                idle: features.filter((f: any) => f.properties.status === 'idle').length,
+                maintenance: features.filter((f: any) => f.properties.status === 'maintenance').length,
+            };
+        },
+
         filteredFeatures(state) {
             if (!state.vehicles?.features) return []
             const q = (state.filters.searchQuery || '').toLowerCase()
