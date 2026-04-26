@@ -42,10 +42,8 @@ const isLoginPage = computed(() => {
   return route.path === '/login'
 })
 
-// === LOGIC BARU: Deteksi rute Live Map ===
 const isMapRoute = computed(() => {
-  // Menyesuaikan dengan path di menuItems lu yaitu '/live-map'
-  return route.path.startsWith('/live-map')
+  return route.path.startsWith('/map')
 })
 
 const isMenuActive = (path: string) => {
@@ -57,7 +55,7 @@ const menuItems = [
   { name: 'Dashboard', path: '/dashboard', roles: ['admin', 'operator', 'viewer'], icon: 'pi-home' },
   { name: 'Vehicles', path: '/vehicles', roles: ['admin', 'operator', 'viewer'], icon: 'pi-car' },
   { name: 'GPS Providers', path: '/gps-providers', roles: ['admin', 'operator', 'viewer'], icon: 'pi-map-marker' },
-  { name: 'Live Map', path: '/live-map', roles: ['admin', 'operator', 'viewer'], icon: 'pi-map' },
+  { name: 'Live Map', path: '/map', roles: ['admin', 'operator', 'viewer'], icon: 'pi-map' },
   { name: 'History', path: '/history', roles: ['admin', 'operator', 'viewer'], icon: 'pi-history' },
   { name: 'Overlays', path: '/overlays', roles: ['admin', 'operator', 'viewer'], icon: 'pi-images' },
   { name: 'Reports', path: '/reports', roles: ['admin', 'operator', 'viewer'], icon: 'pi-chart-bar' },

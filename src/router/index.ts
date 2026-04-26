@@ -78,7 +78,7 @@ const router = createRouter({
       meta: { title: 'Edit GPS Provider', authRequired: true }
     },
     {
-      path: '/live-map',
+      path: '/map',
       name: 'LiveMap',
       component: () => import('@/views/map/LiveMapView.vue'),
       meta: { authRequired: true, hideGlobalSidebar: true }
