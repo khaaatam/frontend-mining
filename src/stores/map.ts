@@ -13,11 +13,13 @@ interface MapState {
     remainingTime: number
     pollingInterval: any
     countdownInterval: any
+    vehicleTypes: any[];
 }
 
 export const useMapStore = defineStore('map', {
     state: (): MapState => ({
         vehicles: { type: 'FeatureCollection', features: [] },
+        vehicleTypes: [] as any[],
         selectedVehicleId: null,
         filters: {
             searchQuery: '',
@@ -61,6 +63,16 @@ export const useMapStore = defineStore('map', {
     },
 
     actions: {
+        async fetchVehicleTypes() {
+            try {
+                // Sesuaikan dengan endpoint API backend lo
+                const response = await axios.get('/api/vehicle-types')
+                this.vehicleTypes = response.data.data
+            } catch (error) {
+                console.error('Failed to fetch vehicle types:', error)
+            }
+        },
+
         async fetchLive() {
             try {
                 const token = localStorage.getItem('token');

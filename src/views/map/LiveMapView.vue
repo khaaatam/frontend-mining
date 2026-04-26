@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMapStore } from '@/stores/map'
 import maplibregl from 'maplibre-gl'
@@ -14,8 +14,10 @@ const router = useRouter()
 const mapContainer = ref<HTMLElement | null>(null)
 let map: maplibregl.Map | null = null
 
-onMounted(() => {
+onMounted(async () => {
     mapStore.startPolling()
+    mapStore.fetchVehicleTypes()
+    await nextTick()
     setTimeout(() => { initMap() }, 100)
 })
 
@@ -97,7 +99,7 @@ function initMap() {
             }
         })
 
-        // === POPUP SESUAI MOCKUP image_e0a9f7.png ===
+        // === POPUP MOCKUP ===
         map!.on('click', 'unclustered-point', (e) => {
             const feature = e.features?.[0];
             if (!feature) return;
@@ -110,13 +112,17 @@ function initMap() {
             if (props.status === 'maintenance') statusStyle = 'background: #fcebeb; color: #a11616;';
             else if (props.status === 'idle') statusStyle = 'background: #faeeda; color: #854f0b;';
 
+            // Ekstrak nama brand & model biar gak jadi "Unit"
+            const brandText = props.brand || props.type_key?.replace('_', ' ') || 'Unknown';
+            const modelText = props.model || '';
+
             const popupDiv = document.createElement('div')
             popupDiv.innerHTML = `
                 <div class="p-4 w-[280px] bg-white rounded-xl shadow-2xl font-sans text-[#1a1916]">
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h3 class="font-bold text-[18px] leading-tight mb-0.5">${props.asset_number}</h3>
-                            <p class="text-[12px] font-medium text-[#6b6a64] capitalize">${(props.type_key || 'Unit').replace('_', ' ')}</p>
+                            <p class="text-[12px] font-medium text-[#6b6a64] capitalize">${brandText} ${modelText}</p>
                         </div>
                         <span class="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="${statusStyle}">
                             ${props.status}
@@ -169,6 +175,21 @@ function flyToVehicle(feature: any) {
     map.flyTo({ center: feature.geometry.coordinates, zoom: 15, speed: 1.2, essential: true })
     mapStore.selectVehicle(feature.properties.id)
 }
+
+// === FUNGSI "PENYAPU RANJAU" BUAT DROPDOWN ===
+const getTypeName = (type: any) => {
+    if (!type) return 'Unknown';
+    if (typeof type === 'string') return type;
+    if (type.name && typeof type.name === 'string') return type.name;
+    if (type.name && typeof type.name === 'object') return type.name.en || type.name.id || JSON.stringify(type.name);
+    return type.type_name || type.key || 'Unknown';
+}
+
+const getTypeKey = (type: any) => {
+    if (!type) return 'all';
+    if (typeof type === 'string') return type;
+    return type.key || type.id || 'all';
+}
 </script>
 
 <template>
@@ -188,11 +209,13 @@ function flyToVehicle(feature: any) {
                         <option value="idle">Idle</option>
                         <option value="maintenance">Maintenance</option>
                     </select>
+
                     <select v-model="mapStore.filters.typeKey"
                         class="text-[12px] font-bold border border-black/10 rounded-lg px-2 h-10 bg-white outline-none cursor-pointer focus:border-[#1a1916]">
                         <option value="all">Type: All</option>
-                        <option value="haul_truck">Haul Truck</option>
-                        <option value="excavator">Excavator</option>
+                        <option v-for="(type, index) in mapStore.vehicleTypes" :key="index" :value="getTypeKey(type)">
+                            {{ getTypeName(type) }}
+                        </option>
                     </select>
                 </div>
 
@@ -204,13 +227,13 @@ function flyToVehicle(feature: any) {
                     </div>
                     <div class="bg-[#fff9f0] border border-[#ffecd1] p-3 rounded-xl text-center">
                         <p class="text-[#BA7517] text-[18px] font-bold leading-none">{{ mapStore.statusCounts?.idle || 0
-                        }}</p>
+                            }}</p>
                         <p class="text-[#BA7517] text-[10px] font-bold uppercase mt-1">Idle</p>
                     </div>
                     <div class="bg-[#fff5f5] border border-[#ffe3e3] p-3 rounded-xl text-center">
                         <p class="text-[#E24B4A] text-[18px] font-bold leading-none">{{
                             mapStore.statusCounts?.maintenance || 0 }}</p>
-                        <p class="text-[#E24B4A] text-[10px] font-bold uppercase mt-1">Maint</p>
+                        <p class="text-[#E24B4A] text-[10px] font-bold uppercase mt-1">Maintenance</p>
                     </div>
                 </div>
 
@@ -232,12 +255,14 @@ function flyToVehicle(feature: any) {
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start">
                             <p class="font-bold text-[14px] text-[#1a1916] truncate">{{ vehicle.properties.asset_number
-                            }}</p>
+                                }}</p>
                             <VehicleStatusBadge :status="vehicle.properties.status" />
                         </div>
+
                         <div class="flex justify-between items-center mt-1">
-                            <p class="text-[11px] font-medium text-[#6b6a64] truncate">
-                                {{ vehicle.properties.brand ?? 'Unit' }} {{ vehicle.properties.model ?? '' }}
+                            <p class="text-[11px] font-medium text-[#6b6a64] truncate capitalize">
+                                {{ vehicle.properties.brand || vehicle.properties.type_key?.replace('_', ' ') ||
+                                'Unknown' }} {{ vehicle.properties.model || '' }}
                             </p>
                             <p class="text-[11px] font-bold text-[#1a1916]">
                                 {{ vehicle.properties.speed ?? 0 }} <span class="text-[9px] text-[#9e9d96]">km/h</span>
@@ -250,6 +275,29 @@ function flyToVehicle(feature: any) {
 
         <main class="flex-1 h-full relative">
             <div ref="mapContainer" class="w-full h-full z-0 outline-none"></div>
+
+            <div
+                class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-black/5 flex items-center gap-2 z-10 text-[#6b6a64] text-[11px] font-bold tracking-wide">
+                <div class="w-2 h-2 rounded-full bg-[#1D9E75] animate-pulse"></div>
+                Live · refreshes in {{ mapStore.remainingTime }}s
+            </div>
+
+            <div
+                class="absolute bottom-6 left-4 bg-white/95 backdrop-blur px-4 py-2.5 rounded-xl shadow-lg flex flex-wrap gap-4 text-[11px] font-bold border border-black/5 z-10 text-[#1a1916]">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#1D9E75]"></div> Active
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#BA7517]"></div> Idle
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#E24B4A]"></div> Maint
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#1E40AF]"></div> Cluster
+                </div>
+            </div>
+
             <div class="absolute bottom-0 left-0 w-full h-[4px] bg-black/5 z-10">
                 <div class="h-full bg-[#1a1916] transition-all duration-1000 ease-linear"
                     :style="{ width: `${(30 - mapStore.remainingTime) / 30 * 100}%` }"></div>
@@ -259,7 +307,6 @@ function flyToVehicle(feature: any) {
 </template>
 
 <style>
-/* CSS Reset buat Popup MapLibre */
 .mining-popup .maplibregl-popup-content {
     padding: 0 !important;
     background: transparent !important;
