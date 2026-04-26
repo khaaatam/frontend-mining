@@ -43,15 +43,39 @@ export const useMapStore = defineStore('map', {
             };
         },
 
-        filteredFeatures(state) {
-            if (!state.vehicles?.features) return []
-            const q = (state.filters.searchQuery || '').toLowerCase()
-            return state.vehicles.features.filter((f: any) => {
-                const name = (f.properties?.asset_number || '').toLowerCase()
-                const matchSearch = q === '' || name.includes(q)
-                const matchStatus = state.filters.status === 'all' || f.properties?.status === state.filters.status
-                return matchSearch && matchStatus
-            })
+        filteredFeatures(state): any[] {
+            // Pastikan data benar-benar ada dan bentuknya array
+            if (!state.vehicles || !Array.isArray(state.vehicles.features)) return [];
+
+            return state.vehicles.features.filter((feature: any) => {
+                const props = feature.properties;
+                if (!props) return false;
+
+                const searchQ = String(state.filters?.searchQuery || '').toLowerCase();
+                const assetNo = String(props.asset_number || '').toLowerCase();
+                const matchesSearch = searchQ === '' || assetNo.includes(searchQ);
+
+                const filterStatus = String(state.filters?.status || 'all').toLowerCase();
+                const propsStatus = String(props.status || '').toLowerCase();
+                const matchesStatus = filterStatus === 'all' || propsStatus === filterStatus;
+
+                // 3. FILTER TYPE (Aman dari null)
+                let matchesType = true;
+                const filterType = String(state.filters?.typeKey || 'all').toLowerCase();
+
+                if (filterType !== 'all') {
+                    const propTypeKey = String(props.type_key || '').toLowerCase();
+                    const propTypeName = String(props.type_name || '').toLowerCase();
+
+                    const propVehicleTypeId = String(props.vehicle_type_id || '');
+
+                    matchesType = (propTypeKey === filterType) ||
+                        (propTypeName === filterType) ||
+                        (propVehicleTypeId === filterType);
+                }
+
+                return matchesSearch && matchesStatus && matchesType;
+            });
         },
 
         filteredVehiclesGeoJSON(): any {
@@ -65,11 +89,19 @@ export const useMapStore = defineStore('map', {
     actions: {
         async fetchVehicleTypes() {
             try {
-                // Sesuaikan dengan endpoint API backend lo
-                const response = await axios.get('/api/vehicle-types')
-                this.vehicleTypes = response.data.data
+                const response = await axios.get('http://localhost:8000/api/vehicle-types', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                })
+
+                if (response.data.data) {
+                    this.vehicleTypes = response.data.data
+                } else {
+                    this.vehicleTypes = response.data
+                }
             } catch (error) {
-                console.error('Failed to fetch vehicle types:', error)
+                console.error('Gagal narik tipe kendaraan:', error)
             }
         },
 

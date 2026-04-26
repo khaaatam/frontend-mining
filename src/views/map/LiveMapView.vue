@@ -34,6 +34,73 @@ watch(() => mapStore.filteredVehiclesGeoJSON, (newData) => {
     }
 }, { deep: true })
 
+function openVehiclePopup(feature: any) {
+    if (!map) return;
+
+    const coordinates = feature.geometry.coordinates.slice();
+    const props = feature.properties;
+
+    let statusStyle = 'background: #eaf3de; color: #3b6d11;';
+    if (props.status === 'maintenance') statusStyle = 'background: #fcebeb; color: #a11616;';
+    else if (props.status === 'idle') statusStyle = 'background: #faeeda; color: #854f0b;';
+
+    const makeText = props.make || 'Unknown';
+    const modelText = props.model || '';
+
+    const popupDiv = document.createElement('div')
+    popupDiv.innerHTML = `
+        <div class="p-4 w-[280px] bg-white rounded-xl shadow-2xl font-sans text-[#1a1916]">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="font-bold text-[18px] leading-tight mb-0.5">${props.asset_number}</h3>
+                    <p class="text-[12px] font-medium text-[#6b6a64] capitalize">${makeText} ${modelText}</p>
+                </div>
+                <span class="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="${statusStyle}">
+                    ${props.status}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
+                    <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
+                    <p class="text-[#1a1916] text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px] font-medium text-[#6b6a64]">km/h</span></p>
+                </div>
+                <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
+                    <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Heading</p>
+                    <p class="text-[#1a1916] text-[15px] font-bold">${props.heading ?? 0}°</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 text-[11px] text-[#6b6a64] font-medium mb-5">
+                <i class="pi pi-clock text-[12px]"></i>
+                <span>Last seen: ${props.last_seen_at ? new Date(props.last_seen_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="btn-history" class="flex-1 px-3 py-2.5 bg-white border border-black/20 text-[#1a1916] text-[12px] font-bold rounded-lg hover:bg-slate-50 transition-colors">History</button>
+                <button id="btn-detail" class="flex-1 px-3 py-2.5 bg-[#1a1916] text-white text-[12px] font-bold rounded-lg hover:bg-black/90 transition-colors">Detail</button>
+            </div>
+        </div>
+    `
+
+    popupDiv.querySelector('#btn-history')?.addEventListener('click', () => {
+        router.push(`/map/history?vehicle_id=${props.id}`)
+    })
+    popupDiv.querySelector('#btn-detail')?.addEventListener('click', () => {
+        router.push(`/vehicles/${props.id}`)
+    })
+
+    const existingPopups = document.getElementsByClassName('maplibregl-popup');
+    while (existingPopups[0]) {
+        existingPopups[0].remove();
+    }
+
+    new maplibregl.Popup({ closeButton: false, className: 'mining-popup', maxWidth: 'none' })
+        .setLngLat(coordinates)
+        .setDOMContent(popupDiv)
+        .addTo(map!)
+}
+
 function initMap() {
     if (!mapContainer.value) return
 
@@ -50,7 +117,6 @@ function initMap() {
 
     map.on('load', () => {
         map!.resize()
-
         const safeInitialData = mapStore.filteredVehiclesGeoJSON || { type: 'FeatureCollection', features: [] };
 
         map!.addSource('vehicles', {
@@ -61,7 +127,6 @@ function initMap() {
             clusterRadius: 50
         })
 
-        // Layer Clusters
         map!.addLayer({
             id: 'clusters',
             type: 'circle',
@@ -78,91 +143,33 @@ function initMap() {
             type: 'symbol',
             source: 'vehicles',
             filter: ['has', 'point_count'],
-            layout: {
-                'text-field': '{point_count_abbreviated}',
-                'text-size': 12
-            },
+            layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
             paint: { 'text-color': '#ffffff' }
         })
 
-        // Layer Kendaraan (Titik Hijau)
         map!.addLayer({
             id: 'unclustered-point',
             type: 'circle',
             source: 'vehicles',
             filter: ['!', ['has', 'point_count']],
             paint: {
-                'circle-color': '#1D9E75',
+                'circle-color': [
+                    'match',
+                    ['get', 'status'],
+                    'active', '#1D9E75',
+                    'idle', '#BA7517',
+                    'maintenance', '#E24B4A',
+                    '#1D9E75'
+                ],
                 'circle-radius': 9,
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#ffffff'
             }
         })
 
-        // === POPUP MOCKUP ===
         map!.on('click', 'unclustered-point', (e) => {
             const feature = e.features?.[0];
-            if (!feature) return;
-
-            const coordinates = (feature.geometry as any).coordinates.slice();
-            const props = feature.properties || {};
-
-            // Logic Warna Badge Status
-            let statusStyle = 'background: #eaf3de; color: #3b6d11;'; // Active
-            if (props.status === 'maintenance') statusStyle = 'background: #fcebeb; color: #a11616;';
-            else if (props.status === 'idle') statusStyle = 'background: #faeeda; color: #854f0b;';
-
-            // Ekstrak nama brand & model biar gak jadi "Unit"
-            const brandText = props.brand || props.type_key?.replace('_', ' ') || 'Unknown';
-            const modelText = props.model || '';
-
-            const popupDiv = document.createElement('div')
-            popupDiv.innerHTML = `
-                <div class="p-4 w-[280px] bg-white rounded-xl shadow-2xl font-sans text-[#1a1916]">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-bold text-[18px] leading-tight mb-0.5">${props.asset_number}</h3>
-                            <p class="text-[12px] font-medium text-[#6b6a64] capitalize">${brandText} ${modelText}</p>
-                        </div>
-                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="${statusStyle}">
-                            ${props.status}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
-                            <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
-                            <p class="text-[#1a1916] text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px] font-medium text-[#6b6a64]">km/h</span></p>
-                        </div>
-                        <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
-                            <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Heading</p>
-                            <p class="text-[#1a1916] text-[15px] font-bold">${props.heading ?? 0}°</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-1.5 text-[11px] text-[#6b6a64] font-medium mb-5">
-                        <i class="pi pi-clock text-[12px]"></i>
-                        <span>Last seen: ${props.last_seen_at ? new Date(props.last_seen_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button id="btn-history" class="flex-1 px-3 py-2.5 bg-white border border-black/20 text-[#1a1916] text-[12px] font-bold rounded-lg hover:bg-slate-50 transition-colors">History</button>
-                        <button id="btn-detail" class="flex-1 px-3 py-2.5 bg-[#1a1916] text-white text-[12px] font-bold rounded-lg hover:bg-black/90 transition-colors">Detail</button>
-                    </div>
-                </div>
-            `
-
-            popupDiv.querySelector('#btn-history')?.addEventListener('click', () => {
-                router.push(`/map/history?vehicle_id=${props.id}`)
-            })
-            popupDiv.querySelector('#btn-detail')?.addEventListener('click', () => {
-                router.push(`/vehicles/${props.id}`)
-            })
-
-            new maplibregl.Popup({ closeButton: false, className: 'mining-popup', maxWidth: 'none' })
-                .setLngLat(coordinates)
-                .setDOMContent(popupDiv)
-                .addTo(map!)
+            if (feature) openVehiclePopup(feature);
         })
 
         map!.on('mouseenter', 'unclustered-point', () => { map!.getCanvas().style.cursor = 'pointer' })
@@ -172,29 +179,35 @@ function initMap() {
 
 function flyToVehicle(feature: any) {
     if (!map) return
-    map.flyTo({ center: feature.geometry.coordinates, zoom: 15, speed: 1.2, essential: true })
+
+    map.flyTo({
+        center: feature.geometry.coordinates,
+        zoom: 16,
+        speed: 1.2,
+        essential: true
+    })
+
     mapStore.selectVehicle(feature.properties.id)
+
+    openVehiclePopup(feature);
 }
 
-// === FUNGSI "PENYAPU RANJAU" BUAT DROPDOWN ===
 const getTypeName = (type: any) => {
     if (!type) return 'Unknown';
     if (typeof type === 'string') return type;
-    if (type.name && typeof type.name === 'string') return type.name;
-    if (type.name && typeof type.name === 'object') return type.name.en || type.name.id || JSON.stringify(type.name);
-    return type.type_name || type.key || 'Unknown';
+    if (type.name) return type.name;
+    return type.key || 'Unknown';
 }
 
 const getTypeKey = (type: any) => {
     if (!type) return 'all';
     if (typeof type === 'string') return type;
-    return type.key || type.id || 'all';
+    return type.name || type.key || type.id || 'all';
 }
 </script>
 
 <template>
     <div class="flex w-full h-full overflow-hidden bg-[#f5f4f1] font-sans">
-
         <aside class="w-[360px] h-full bg-white border-r border-black/10 flex flex-col z-10 shrink-0 shadow-xl">
             <div class="p-5 border-b border-black/10 bg-white space-y-4 shrink-0">
                 <h2 class="text-[14px] font-bold text-[#1a1916] tracking-tight">
@@ -227,13 +240,13 @@ const getTypeKey = (type: any) => {
                     </div>
                     <div class="bg-[#fff9f0] border border-[#ffecd1] p-3 rounded-xl text-center">
                         <p class="text-[#BA7517] text-[18px] font-bold leading-none">{{ mapStore.statusCounts?.idle || 0
-                            }}</p>
+                        }}</p>
                         <p class="text-[#BA7517] text-[10px] font-bold uppercase mt-1">Idle</p>
                     </div>
                     <div class="bg-[#fff5f5] border border-[#ffe3e3] p-3 rounded-xl text-center">
                         <p class="text-[#E24B4A] text-[18px] font-bold leading-none">{{
                             mapStore.statusCounts?.maintenance || 0 }}</p>
-                        <p class="text-[#E24B4A] text-[10px] font-bold uppercase mt-1">Maintenance</p>
+                        <p class="text-[#E24B4A] text-[10px] font-bold uppercase mt-1">Maint</p>
                     </div>
                 </div>
 
@@ -255,14 +268,13 @@ const getTypeKey = (type: any) => {
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start">
                             <p class="font-bold text-[14px] text-[#1a1916] truncate">{{ vehicle.properties.asset_number
-                                }}</p>
+                            }}</p>
                             <VehicleStatusBadge :status="vehicle.properties.status" />
                         </div>
 
                         <div class="flex justify-between items-center mt-1">
                             <p class="text-[11px] font-medium text-[#6b6a64] truncate capitalize">
-                                {{ vehicle.properties.brand || vehicle.properties.type_key?.replace('_', ' ') ||
-                                'Unknown' }} {{ vehicle.properties.model || '' }}
+                                {{ vehicle.properties.make || 'Unknown' }} {{ vehicle.properties.model || '' }}
                             </p>
                             <p class="text-[11px] font-bold text-[#1a1916]">
                                 {{ vehicle.properties.speed ?? 0 }} <span class="text-[9px] text-[#9e9d96]">km/h</span>
