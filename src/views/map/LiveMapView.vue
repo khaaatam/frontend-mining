@@ -39,6 +39,7 @@ function openVehiclePopup(feature: any) {
 
     const coordinates = feature.geometry.coordinates.slice();
     const props = feature.properties;
+    const typeName = props.type_name || '';
 
     let statusStyle = 'background: #eaf3de; color: #3b6d11;';
     if (props.status === 'maintenance') statusStyle = 'background: #fcebeb; color: #a11616;';
@@ -47,28 +48,65 @@ function openVehiclePopup(feature: any) {
     const makeText = props.make || 'Unknown';
     const modelText = props.model || '';
 
+    // LOGIC POPUP DINAMIS (Veridapt vs Biasa)
+    const isStation = typeName === 'Fuel Station';
+    const isFuelTruck = typeName === 'Fuel Truck';
+
+    let metricCards = '';
+
+    if (isStation) {
+        // TANGKI: Gak butuh Speed & Heading
+        metricCards = `
+            <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5 col-span-2 text-center">
+                <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Asset Category</p>
+                <p class="text-[#FFC107] text-[13px] font-bold">Static Fuel Station</p>
+            </div>
+            <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5 col-span-2 text-center">
+                <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Source</p>
+                <p class="text-[#1a1916] text-[12px] font-bold italic">Veridapt AdaptIQ</p>
+            </div>
+        `;
+    } else if (isFuelTruck) {
+        // TRUK BENSIN: Butuh Speed, Source Veridapt
+        metricCards = `
+            <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
+                <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
+                <p class="text-[#1a1916] text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px]">km/h</span></p>
+            </div>
+            <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
+                <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Source</p>
+                <p class="text-[#FF5722] text-[12px] font-bold italic">Veridapt</p>
+            </div>
+        `;
+    } else {
+        // TRUK BIASA (Ambulance, Dump Truck, dll)
+        metricCards = `
+            <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
+                <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
+                <p class="text-[#1a1916] text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px]">km/h</span></p>
+            </div>
+            <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
+                <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Heading</p>
+                <p class="text-[#1a1916] text-[15px] font-bold">${props.heading ?? 0}°</p>
+            </div>
+        `;
+    }
+
     const popupDiv = document.createElement('div')
     popupDiv.innerHTML = `
         <div class="p-4 w-[280px] bg-white rounded-xl shadow-2xl font-sans text-[#1a1916]">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <h3 class="font-bold text-[18px] leading-tight mb-0.5">${props.asset_number}</h3>
+                    <h3 class="font-bold text-[18px] leading-tight mb-0.5">${props.asset_number || props.name || 'Unknown Asset'}</h3>
                     <p class="text-[12px] font-medium text-[#6b6a64] capitalize">${makeText} ${modelText}</p>
                 </div>
                 <span class="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="${statusStyle}">
-                    ${props.status}
+                    ${props.status || 'ACTIVE'}
                 </span>
             </div>
 
             <div class="grid grid-cols-2 gap-2 mb-4">
-                <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
-                    <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
-                    <p class="text-[#1a1916] text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px] font-medium text-[#6b6a64]">km/h</span></p>
-                </div>
-                <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
-                    <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Heading</p>
-                    <p class="text-[#1a1916] text-[15px] font-bold">${props.heading ?? 0}°</p>
-                </div>
+                ${metricCards}
             </div>
 
             <div class="flex items-center gap-1.5 text-[11px] text-[#6b6a64] font-medium mb-5">
@@ -153,13 +191,30 @@ function initMap() {
             source: 'vehicles',
             filter: ['!', ['has', 'point_count']],
             paint: {
+                // LOGIC WARNA LAYER MAPLIBRE (Diperbaiki)
                 'circle-color': [
-                    'match',
-                    ['get', 'status'],
-                    'active', '#1D9E75',
-                    'idle', '#BA7517',
-                    'maintenance', '#E24B4A',
-                    '#1D9E75'
+                    'case',
+                    // Cek Tangki: Kita cek dua kolom sekaligus biar aman
+                    ['any',
+                        ['==', ['get', 'type_name'], 'Fuel Station'],
+                        ['==', ['get', 'type_key'], 'fuel-station']
+                    ], '#FFC107', // Kuning
+
+                    // Cek Truk Bensin
+                    ['any',
+                        ['==', ['get', 'type_name'], 'Fuel Truck'],
+                        ['==', ['get', 'type_key'], 'fuel-truck']
+                    ], '#FF5722', // Orange
+
+                    // Selain itu, balik ke warna status
+                    [
+                        'match',
+                        ['get', 'status'],
+                        'active', '#1D9E75',
+                        'idle', '#BA7517',
+                        'maintenance', '#E24B4A',
+                        '#1D9E75'
+                    ]
                 ],
                 'circle-radius': 9,
                 'circle-stroke-width': 2,
@@ -240,7 +295,7 @@ const getTypeKey = (type: any) => {
                     </div>
                     <div class="bg-[#fff9f0] border border-[#ffecd1] p-3 rounded-xl text-center">
                         <p class="text-[#BA7517] text-[18px] font-bold leading-none">{{ mapStore.statusCounts?.idle || 0
-                        }}</p>
+                            }}</p>
                         <p class="text-[#BA7517] text-[10px] font-bold uppercase mt-1">Idle</p>
                     </div>
                     <div class="bg-[#fff5f5] border border-[#ffe3e3] p-3 rounded-xl text-center">
@@ -260,24 +315,39 @@ const getTypeKey = (type: any) => {
                     class="p-4 border-b border-black/5 hover:bg-white cursor-pointer flex gap-4 items-center transition-all"
                     :class="{ 'bg-white shadow-[inset_4px_0_0_0_#1a1916]': mapStore.selectedVehicleId === vehicle.properties.id }">
 
-                    <div
-                        class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 border border-black/5 text-slate-400">
-                        <i class="pi pi-car text-lg"></i>
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-black/5 transition-colors"
+                        :style="{
+                            backgroundColor:
+                                vehicle.properties.type_name === 'Fuel Station' ? '#FFC107' :
+                                    (vehicle.properties.type_name === 'Fuel Truck' ? '#FF5722' : '#f1f5f9'),
+                            color:
+                                (vehicle.properties.type_name === 'Fuel Station' || vehicle.properties.type_name === 'Fuel Truck') ? '#ffffff' : '#94a3b8'
+                        }">
+                        <i :class="[
+                            'pi',
+                            vehicle.properties.type_name === 'Fuel Station' ? 'pi-database' : 'pi-car',
+                            'text-lg'
+                        ]"></i>
                     </div>
 
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start">
                             <p class="font-bold text-[14px] text-[#1a1916] truncate">{{ vehicle.properties.asset_number
-                            }}</p>
-                            <VehicleStatusBadge :status="vehicle.properties.status" />
+                                || vehicle.properties.name }}</p>
+                            <VehicleStatusBadge :status="vehicle.properties.status || 'active'" />
                         </div>
 
                         <div class="flex justify-between items-center mt-1">
                             <p class="text-[11px] font-medium text-[#6b6a64] truncate capitalize">
                                 {{ vehicle.properties.make || 'Unknown' }} {{ vehicle.properties.model || '' }}
                             </p>
-                            <p class="text-[11px] font-bold text-[#1a1916]">
+
+                            <p v-if="vehicle.properties.type_name !== 'Fuel Station'"
+                                class="text-[11px] font-bold text-[#1a1916]">
                                 {{ vehicle.properties.speed ?? 0 }} <span class="text-[9px] text-[#9e9d96]">km/h</span>
+                            </p>
+                            <p v-else class="text-[10px] font-bold text-[#FFC107] uppercase tracking-tighter">
+                                Static Asset
                             </p>
                         </div>
                     </div>
@@ -304,6 +374,12 @@ const getTypeKey = (type: any) => {
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full bg-[#E24B4A]"></div> Maint
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#FFC107]"></div> Tank
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#FF5722]"></div> Fuel Truck
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full bg-[#1E40AF]"></div> Cluster
