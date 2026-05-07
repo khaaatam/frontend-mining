@@ -41,21 +41,44 @@ function openVehiclePopup(feature: any) {
     const props = feature.properties;
     const typeName = props.type_name || '';
 
-    let statusStyle = 'background: #eaf3de; color: #3b6d11;';
-    if (props.status === 'maintenance') statusStyle = 'background: #fcebeb; color: #a11616;';
-    else if (props.status === 'idle') statusStyle = 'background: #faeeda; color: #854f0b;';
-
     const makeText = props.make || 'Unknown';
     const modelText = props.model || '';
 
-    // LOGIC POPUP DINAMIS (Veridapt vs Biasa)
+    // ==========================================
+    // LOGIC POPUP DINAMIS & DISPENSING
+    // ==========================================
     const isStation = typeName === 'Fuel Station';
     const isFuelTruck = typeName === 'Fuel Truck';
+    const isDispensing = isFuelTruck && props.speed === 0 && props.veridapt_tank_code;
 
+    // 1. Setup Status Badge Text & Style
+    let statusBadge = '';
+    if (isDispensing) {
+        statusBadge = `<span class="bg-blue-600 text-white px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm animate-pulse">
+            💧 DISPENSING (${props.veridapt_tank_code})
+        </span>`;
+    } else if (props.speed === 0 && !isStation) {
+        statusBadge = `<span class="bg-[#faeeda] text-[#854f0b] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            ⏸ IDLE
+        </span>`;
+    } else if (props.speed > 0) {
+        statusBadge = `<span class="bg-[#eaf3de] text-[#3b6d11] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            ▶ MOVING
+        </span>`;
+    } else {
+        // Fallback or for Static Station
+        let statusStyle = 'background: #eaf3de; color: #3b6d11;';
+        if (props.status === 'maintenance') statusStyle = 'background: #fcebeb; color: #a11616;';
+        else if (props.status === 'idle') statusStyle = 'background: #faeeda; color: #854f0b;';
+
+        statusBadge = `<span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm" style="${statusStyle}">
+            ${props.status || 'ACTIVE'}
+        </span>`;
+    }
+
+    // 2. Setup Metric Cards
     let metricCards = '';
-
     if (isStation) {
-        // TANGKI: Gak butuh Speed & Heading
         metricCards = `
             <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5 col-span-2 text-center">
                 <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Asset Category</p>
@@ -67,11 +90,10 @@ function openVehiclePopup(feature: any) {
             </div>
         `;
     } else if (isFuelTruck) {
-        // TRUK BENSIN: Butuh Speed, Source Veridapt
         metricCards = `
             <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
                 <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
-                <p class="text-[#1a1916] text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px]">km/h</span></p>
+                <p class="${isDispensing ? 'text-blue-600' : 'text-[#1a1916]'} text-[15px] font-bold">${props.speed ?? 0} <span class="text-[10px]">km/h</span></p>
             </div>
             <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
                 <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Source</p>
@@ -79,7 +101,6 @@ function openVehiclePopup(feature: any) {
             </div>
         `;
     } else {
-        // TRUK BIASA (Ambulance, Dump Truck, dll)
         metricCards = `
             <div class="bg-[#f5f4f1] p-2.5 rounded-lg border border-black/5">
                 <p class="text-[#9e9d96] text-[10px] font-bold uppercase mb-0.5">Speed</p>
@@ -100,9 +121,7 @@ function openVehiclePopup(feature: any) {
                     <h3 class="font-bold text-[18px] leading-tight mb-0.5">${props.asset_number || props.name || 'Unknown Asset'}</h3>
                     <p class="text-[12px] font-medium text-[#6b6a64] capitalize">${makeText} ${modelText}</p>
                 </div>
-                <span class="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="${statusStyle}">
-                    ${props.status || 'ACTIVE'}
-                </span>
+                ${statusBadge}
             </div>
 
             <div class="grid grid-cols-2 gap-2 mb-4">
@@ -191,22 +210,29 @@ function initMap() {
             source: 'vehicles',
             filter: ['!', ['has', 'point_count']],
             paint: {
-                // LOGIC WARNA LAYER MAPLIBRE (Diperbaiki)
+                // LOGIC WARNA LAYER DENGAN DISPENSING BLUE
                 'circle-color': [
                     'case',
-                    // Cek Tangki: Kita cek dua kolom sekaligus biar aman
+                    // 1. Dispensing Truck -> Biru
+                    ['all',
+                        ['==', ['get', 'type_name'], 'Fuel Truck'],
+                        ['==', ['get', 'speed'], 0],
+                        ['!=', ['get', 'veridapt_tank_code'], null]
+                    ], '#2563EB',
+
+                    // 2. Fuel Station -> Kuning
                     ['any',
                         ['==', ['get', 'type_name'], 'Fuel Station'],
                         ['==', ['get', 'type_key'], 'fuel-station']
-                    ], '#FFC107', // Kuning
+                    ], '#FFC107',
 
-                    // Cek Truk Bensin
+                    // 3. Fuel Truck Biasa -> Orange
                     ['any',
                         ['==', ['get', 'type_name'], 'Fuel Truck'],
                         ['==', ['get', 'type_key'], 'fuel-truck']
-                    ], '#FF5722', // Orange
+                    ], '#FF5722',
 
-                    // Selain itu, balik ke warna status
+                    // 4. Default by Status
                     [
                         'match',
                         ['get', 'status'],
@@ -318,8 +344,9 @@ const getTypeKey = (type: any) => {
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-black/5 transition-colors"
                         :style="{
                             backgroundColor:
-                                vehicle.properties.type_name === 'Fuel Station' ? '#FFC107' :
-                                    (vehicle.properties.type_name === 'Fuel Truck' ? '#FF5722' : '#f1f5f9'),
+                                (vehicle.properties.type_name === 'Fuel Truck' && vehicle.properties.speed === 0 && vehicle.properties.veridapt_tank_code) ? '#2563EB' :
+                                    vehicle.properties.type_name === 'Fuel Station' ? '#FFC107' :
+                                        (vehicle.properties.type_name === 'Fuel Truck' ? '#FF5722' : '#f1f5f9'),
                             color:
                                 (vehicle.properties.type_name === 'Fuel Station' || vehicle.properties.type_name === 'Fuel Truck') ? '#ffffff' : '#94a3b8'
                         }">
@@ -334,7 +361,13 @@ const getTypeKey = (type: any) => {
                         <div class="flex justify-between items-start">
                             <p class="font-bold text-[14px] text-[#1a1916] truncate">{{ vehicle.properties.asset_number
                                 || vehicle.properties.name }}</p>
-                            <VehicleStatusBadge :status="vehicle.properties.status || 'active'" />
+
+                            <span
+                                v-if="vehicle.properties.type_name === 'Fuel Truck' && vehicle.properties.speed === 0 && vehicle.properties.veridapt_tank_code"
+                                class="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse shadow-sm">
+                                Dispensing
+                            </span>
+                            <VehicleStatusBadge v-else :status="vehicle.properties.status || 'active'" />
                         </div>
 
                         <div class="flex justify-between items-center mt-1">
@@ -342,7 +375,11 @@ const getTypeKey = (type: any) => {
                                 {{ vehicle.properties.make || 'Unknown' }} {{ vehicle.properties.model || '' }}
                             </p>
 
-                            <p v-if="vehicle.properties.type_name !== 'Fuel Station'"
+                            <p v-if="vehicle.properties.type_name === 'Fuel Truck' && vehicle.properties.speed === 0 && vehicle.properties.veridapt_tank_code"
+                                class="text-[11px] font-bold text-blue-600">
+                                Dispensing ({{ vehicle.properties.veridapt_tank_code }})
+                            </p>
+                            <p v-else-if="vehicle.properties.type_name !== 'Fuel Station'"
                                 class="text-[11px] font-bold text-[#1a1916]">
                                 {{ vehicle.properties.speed ?? 0 }} <span class="text-[9px] text-[#9e9d96]">km/h</span>
                             </p>
@@ -380,6 +417,9 @@ const getTypeKey = (type: any) => {
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full bg-[#FF5722]"></div> Fuel Truck
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></div> Dispensing
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full bg-[#1E40AF]"></div> Cluster
